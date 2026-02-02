@@ -372,21 +372,32 @@ class LocationDashboard extends ConsumerWidget {
                   .getAuthorizationStatus(),
               builder: (context, snapshot) {
                 final status = snapshot.data;
-                final statusLabel = status == 4
-                    ? "ALWAYS"
-                    : (status == 3 ? "WHEN IN USE" : "DENIED ($status)");
-                return _row(
-                  "OS Permission",
-                  statusLabel,
-                  status == 4
-                      ? Colors.green
-                      : (status == 3 ? Colors.orange : Colors.red),
-                );
+                String statusLabel = "UNKNOWN";
+                Color statusColor = Colors.grey;
+
+                if (status ==
+                    bg.ProviderChangeEvent.AUTHORIZATION_STATUS_ALWAYS) {
+                  statusLabel = "ALWAYS";
+                  statusColor = Colors.green;
+                } else if (status ==
+                    bg.ProviderChangeEvent.AUTHORIZATION_STATUS_WHEN_IN_USE) {
+                  statusLabel = "WHEN IN USE";
+                  statusColor = Colors.orange;
+                } else if (status ==
+                    bg.ProviderChangeEvent.AUTHORIZATION_STATUS_DENIED) {
+                  statusLabel = "DENIED";
+                  statusColor = Colors.red;
+                } else if (status != null) {
+                  statusLabel = "LOCKED ($status)";
+                  statusColor = Colors.redAccent;
+                }
+
+                return _row("OS Permission", statusLabel, statusColor);
               },
             ),
             _row(
-              "Hardware Plugin",
-              state.isServiceEnabled ? "ONLINE (Tracking)" : "OFFLINE",
+              "Service Status",
+              state.isServiceEnabled ? "ONLINE" : "OFFLINE",
               state.isServiceEnabled ? Colors.green : Colors.redAccent,
             ),
             _row("Last Activity", state.lastActivity ?? "Unknown"),
