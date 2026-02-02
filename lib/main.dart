@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'common/services/location_manager.dart';
 import 'log_viewer.dart';
 import 'common/providers/location_providers.dart';
+import 'common/models/location_config.dart';
+import 'common/models/trip_models.dart';
+import 'common/services/location_service.dart';
+import 'common/services/location_headless_task.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

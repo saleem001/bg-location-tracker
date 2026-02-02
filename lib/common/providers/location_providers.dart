@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/location_manager.dart';
+import '../services/location_service.dart';
+import '../services/location_plugin.dart';
+import '../models/trip_models.dart';
 
 /// 1. INFRASTRUCTURE PROVIDER
 final locationManagerProvider = Provider<LocationManager>((ref) {
