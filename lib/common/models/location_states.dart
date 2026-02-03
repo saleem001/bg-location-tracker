@@ -2,6 +2,8 @@ import 'location_events.dart';
 
 class TripState {
   final String tripId;
+  final double sourceLat;
+  final double sourceLng;
   final double destinationLat;
   final double destinationLng;
   final String destinationName;
@@ -12,11 +14,15 @@ class TripState {
   final bool isMoving;
   final bool isStationary;
   final bool hasArrived;
+  final bool isWithinGeofence;
+  final double geofenceRadius;
   final DateTime? startedAt;
   final DateTime? arrivedAt;
 
   TripState({
     required this.tripId,
+    required this.sourceLat,
+    required this.sourceLng,
     required this.destinationLat,
     required this.destinationLng,
     required this.destinationName,
@@ -27,20 +33,28 @@ class TripState {
     this.isMoving = false,
     this.isStationary = false,
     this.hasArrived = false,
+    this.isWithinGeofence = false,
+    this.geofenceRadius = 200.0,
     this.startedAt,
     this.arrivedAt,
   });
 
   factory TripState.newTrip({
     required String tripId,
+    required double sourceLat,
+    required double sourceLng,
     required double destinationLat,
     required double destinationLng,
     required String destinationName,
+    double geofenceRadius = 200.0,
   }) => TripState(
     tripId: tripId,
+    sourceLat: sourceLat,
+    sourceLng: sourceLng,
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
+    geofenceRadius: geofenceRadius,
     startedAt: DateTime.now(),
   );
 
@@ -52,9 +66,13 @@ class TripState {
     bool? isMoving,
     bool? isStationary,
     bool? hasArrived,
+    bool? isWithinGeofence,
+    double? geofenceRadius,
     DateTime? arrivedAt,
   }) => TripState(
     tripId: tripId,
+    sourceLat: sourceLat,
+    sourceLng: sourceLng,
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
@@ -65,6 +83,8 @@ class TripState {
     isMoving: isMoving ?? this.isMoving,
     isStationary: isStationary ?? this.isStationary,
     hasArrived: hasArrived ?? this.hasArrived,
+    isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
+    geofenceRadius: geofenceRadius ?? this.geofenceRadius,
     startedAt: startedAt,
     arrivedAt: arrivedAt ?? this.arrivedAt,
   );

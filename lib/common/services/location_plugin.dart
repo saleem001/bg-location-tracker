@@ -10,10 +10,13 @@ abstract class ILocationPlugin {
   Future<void> stop();
   Future<LocationEntity> getCurrentPosition();
   void onLocation(void Function(LocationEntity) s, [void Function(dynamic)? f]);
+  void onGeofence(void Function(String identifier, String action) callback);
   void onEnabledChange(void Function(bool) c);
   void onMotionChange(void Function(LocationEntity, bool) c);
   void removeListeners();
   Future<void> setConfig(Map<String, dynamic> extras);
+  Future<void> addGeofence(String id, double lat, double lng, double radius);
+  Future<void> removeGeofence(String id);
 }
 
 class BackgroundGeolocationPlugin implements ILocationPlugin {
@@ -66,6 +69,25 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
   Future<void> stop() => bg.BackgroundGeolocation.stop();
 
   @override
+  Future<void> addGeofence(String id, double lat, double lng, double radius) {
+    return bg.BackgroundGeolocation.addGeofence(
+      bg.Geofence(
+        identifier: id,
+        radius: radius,
+        latitude: lat,
+        longitude: lng,
+        notifyOnEntry: true,
+        notifyOnExit: true,
+      ),
+    );
+  }
+
+  @override
+  Future<void> removeGeofence(String id) {
+    return bg.BackgroundGeolocation.removeGeofence(id);
+  }
+
+  @override
   Future<LocationEntity> getCurrentPosition() async {
     final location = await bg.BackgroundGeolocation.getCurrentPosition(
       persist: false,
@@ -96,6 +118,13 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
     ),
     f,
   );
+
+  @override
+  void onGeofence(void Function(String identifier, String action) callback) {
+    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) {
+      callback(event.identifier, event.action);
+    });
+  }
 
   @override
   void onEnabledChange(void Function(bool) c) =>

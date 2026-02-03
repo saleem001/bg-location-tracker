@@ -29,6 +29,21 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
     _plugin.onMotionChange((loc, isMoving) {
       _handleLocation(loc, isMoving: isMoving);
     });
+
+    // Geofence events
+    _plugin.onGeofence((identifier, action) {
+      if (state.activeTrip?.tripId == identifier) {
+        if (action == "ENTER") {
+          state = state.copyWith(
+            activeTrip: state.activeTrip?.copyWith(isWithinGeofence: true),
+          );
+        } else if (action == "EXIT") {
+          state = state.copyWith(
+            activeTrip: state.activeTrip?.copyWith(isWithinGeofence: false),
+          );
+        }
+      }
+    });
   }
 
   void _handleLocation(LocationEntity loc, {bool? isMoving}) {
@@ -85,9 +100,12 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   Future<void> startTrip({
-    required double lat,
-    required double lng,
+    required double sourceLat,
+    required double sourceLng,
+    required double destinationLat,
+    required double destinationLng,
     required String name,
+    double geofenceRadius = 200.0,
     bool reset = true,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -102,20 +120,34 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
 
       final newTrip = TripState.newTrip(
         tripId: tripId,
-        destinationLat: lat,
-        destinationLng: lng,
+        sourceLat: sourceLat,
+        sourceLng: sourceLng,
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
         destinationName: name,
+        geofenceRadius: geofenceRadius,
       ).copyWith(currentLocation: currentPos);
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
 
       await _plugin.setConfig({
         'tripId': tripId,
-        'destinationLat': lat,
-        'destinationLng': lng,
+        'sourceLat': sourceLat,
+        'sourceLng': sourceLng,
+        'destinationLat': destinationLat,
+        'destinationLng': destinationLng,
         'destinationName': name,
+        'geofenceRadius': geofenceRadius,
         'startedAt': newTrip.startedAt?.toIso8601String(),
       });
+
+      // Register geofence for the destination
+      await _plugin.addGeofence(
+        tripId,
+        destinationLat,
+        destinationLng,
+        geofenceRadius,
+      );
 
       await _plugin.start();
     } catch (e) {
@@ -126,6 +158,9 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   Future<void> stopTrip() async {
     state = state.copyWith(isLoading: true);
     try {
+      if (state.activeTrip != null) {
+        await _plugin.removeGeofence(state.activeTrip!.tripId);
+      }
       await _plugin.setConfig({});
       await _plugin.stop();
       state = state.copyWith(
