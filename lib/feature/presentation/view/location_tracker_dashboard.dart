@@ -7,6 +7,7 @@ import 'package:track_me/common/models/location_states.dart';
 import 'package:track_me/feature/presentation/viewmodel/location_tracker_viewmodel.dart';
 import 'package:track_me/log_viewer.dart';
 import 'package:flutter_map/flutter_map.dart';
+
 class LocationDashboard extends ConsumerStatefulWidget {
   const LocationDashboard({super.key});
 
@@ -14,19 +15,28 @@ class LocationDashboard extends ConsumerStatefulWidget {
   ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
 }
 
+String sourceLat = "31.5863913";
+String sourceLng = "74.3925714";
+String destLat = "31.5795243";
+String destLng = "74.3825985";
 
 class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   final MapController _mapController = MapController();
-  final TextEditingController _sourceLatController =
-      TextEditingController(text: "34.740674");
-  final TextEditingController _sourceLngController =
-      TextEditingController(text: "72.361101");
-  final TextEditingController _destLatController =
-      TextEditingController(text: "34.749608");
-  final TextEditingController _destLngController =
-      TextEditingController(text: "72.357231");
-  final TextEditingController _radiusController =
-      TextEditingController(text: "200");
+  final TextEditingController _sourceLatController = TextEditingController(
+    text: sourceLat,
+  );
+  final TextEditingController _sourceLngController = TextEditingController(
+    text: sourceLng,
+  );
+  final TextEditingController _destLatController = TextEditingController(
+    text: destLat,
+  );
+  final TextEditingController _destLngController = TextEditingController(
+    text: destLng,
+  );
+  final TextEditingController _radiusController = TextEditingController(
+    text: "200",
+  );
 
   @override
   void dispose() {
@@ -44,9 +54,9 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     final state = ref.watch(locationTrackerViewModelProvider);
     final notifier = ref.read(locationTrackerViewModelProvider.notifier);
 
-    // Auto-center map on current location if trip is active
-    if (state.activeTrip?.currentLocation != null) {
-      final cur = state.activeTrip!.currentLocation!;
+    // Auto-center map on current location if active
+    if (state.currentLocation != null) {
+      final cur = state.currentLocation!;
       _mapController.move(LatLng(cur.latitude, cur.longitude), 15);
     }
     // 34.740674, 72.361101
@@ -129,12 +139,11 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                               size: 30,
                             ),
                           ),
-                          // Current Location Marker
-                          if (state.activeTrip!.currentLocation != null)
+                          if (state.currentLocation != null)
                             Marker(
                               point: LatLng(
-                                state.activeTrip!.currentLocation!.latitude,
-                                state.activeTrip!.currentLocation!.longitude,
+                                state.currentLocation!.latitude,
+                                state.currentLocation!.longitude,
                               ),
                               width: 40,
                               height: 40,
@@ -154,7 +163,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                                 state.activeTrip!.sourceLat,
                                 state.activeTrip!.sourceLng,
                               ),
-                              ...state.activeTrip!.history.map(
+                              ...state.locationHistory.map(
                                 (l) => LatLng(l.latitude, l.longitude),
                               ),
                             ],
@@ -205,8 +214,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                   right: 16,
                   child: FloatingActionButton.small(
                     onPressed: () {
-                      if (state.activeTrip?.currentLocation != null) {
-                        final cur = state.activeTrip!.currentLocation!;
+                      if (state.currentLocation != null) {
+                        final cur = state.currentLocation!;
                         _mapController.move(
                           LatLng(cur.latitude, cur.longitude),
                           15,
@@ -246,9 +255,9 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                     ),
                   if (state.activeTrip != null)
                     _buildTripCard(state.activeTrip!, state, notifier),
-                    _buildInputFields(),
-                    // const SizedBox(height: 16),
-                    // _buildIdleCard(),
+                  _buildInputFields(),
+                  // const SizedBox(height: 16),
+                  // _buildIdleCard(),
                   const SizedBox(height: 16),
                   if (state.activeTrip == null)
                     ElevatedButton.icon(
@@ -422,15 +431,15 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             _row("Destination", trip.destinationName),
             _row(
               "Current Pos",
-              trip.currentLocation != null
-                  ? "${trip.currentLocation?.latitude.toStringAsFixed(6)}, ${trip.currentLocation?.longitude.toStringAsFixed(6)}"
+              state.currentLocation != null
+                  ? "${state.currentLocation?.latitude.toStringAsFixed(6)}, ${state.currentLocation?.longitude.toStringAsFixed(6)}"
                   : "WAITING FOR SIGNAL...",
-              trip.currentLocation != null ? Colors.white : Colors.grey,
+              state.currentLocation != null ? Colors.white : Colors.grey,
             ),
             _row(
               "Speed",
-              "${trip.speedKmh.toStringAsFixed(1)} km/h",
-              trip.isMoving ? Colors.green : Colors.orange,
+              "${state.speedKmh.toStringAsFixed(1)} km/h",
+              state.isMoving ? Colors.green : Colors.orange,
             ),
             _row(
               "Status",

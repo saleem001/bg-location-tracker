@@ -1,29 +1,8 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:track_me/common/models/geofence_event.dart';
 import '../models/location_events.dart';
 import 'data_mapper.dart';
-
-class LocationMapper implements DataMapper<LocationEntity> {
-  @override
-  LocationEntity map(dynamic data) {
-    final location = data as bg.Location;
-    return LocationEntity(
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      speed: location.coords.speed,
-      odometer: location.odometer,
-      timestamp: DateTime.parse(location.timestamp),
-    );
-  }
-}
-
-class GeofenceEventMapper implements DataMapper<GeofenceEvent> {
-  @override
-  GeofenceEvent map(dynamic data) {
-    final event = data as bg.GeofenceEvent;
-    return GeofenceEvent(identifier: event.identifier, action: event.action);
-  }
-}
 
 class ActivityChangeEventMapper implements DataMapper<ActivityChangeEvent> {
   @override
@@ -45,17 +24,6 @@ class ProviderChangeEventMapper implements DataMapper<ProviderChangeEvent> {
       status: event.status,
       network: event.network,
       gps: event.gps,
-    );
-  }
-}
-
-class MotionChangeEventMapper implements DataMapper<MotionChangeEvent> {
-  @override
-  MotionChangeEvent map(dynamic data) {
-    final location = data as bg.Location;
-    return MotionChangeEvent(
-      location: LocationMapper().map(location),
-      isMoving: location.isMoving,
     );
   }
 }

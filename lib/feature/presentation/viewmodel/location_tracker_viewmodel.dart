@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
+import 'package:track_me/common/models/geofence_event.dart';
+import 'package:track_me/common/models/tracking_events.dart';
+import 'package:track_me/common/utils/location_utils.dart';
 import '../../../common/models/location_config.dart';
 import '../../../common/models/location_states.dart';
-import '../../../common/models/location_events.dart';
-import '../../../common/services/location_plugin.dart';
+import '../../../common/services/location_manager.dart';
 
 final locationTrackerViewModelProvider =
     StateNotifierProvider<LocationTrackerViewModel, LocationState>((ref) {
@@ -20,7 +20,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   void _initSubscribers() {
-    // Primary location updates
     _plugin.onLocation((loc) {
       _handleLocation(loc);
     });
@@ -30,42 +29,48 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
       _handleLocation(loc, isMoving: isMoving);
     });
 
-    // Geofence events
     _plugin.onGeofence((identifier, action) {
-      if (state.activeTrip?.tripId == identifier) {
-        if (action == "ENTER") {
-          state = state.copyWith(
-            activeTrip: state.activeTrip?.copyWith(isWithinGeofence: true),
-          );
-        } else if (action == "EXIT") {
-          state = state.copyWith(
-            activeTrip: state.activeTrip?.copyWith(isWithinGeofence: false),
-          );
-        }
-      }
+      _handleGeofence(identifier, action);
     });
   }
 
-  void _handleLocation(LocationEntity loc, {bool? isMoving}) {
-    final speedKmh = loc.speed * 3.6;
-    TripState? updatedTrip;
+  void _handleLocation(LocationTrackingEvent loc, {bool? isMoving}) {
+    final speed = LocationUtils.msToKmh(loc.speed);
+    TripState? updatedTrip = state.activeTrip;
 
-    if (state.activeTrip != null) {
-      updatedTrip = state.activeTrip!.copyWith(
-        currentLocation: loc,
-        speedKmh: speedKmh > 0 ? speedKmh : 0,
-        isMoving: isMoving ?? state.activeTrip!.isMoving,
-        isStationary: isMoving != null
-            ? !isMoving
-            : state.activeTrip!.isStationary,
-        history: [...state.activeTrip!.history, loc],
+    if (updatedTrip != null) {
+      final distance = LocationUtils.calculateDistanceMeters(
+        loc.latitude,
+        loc.longitude,
+        updatedTrip.destinationLat,
+        updatedTrip.destinationLng,
+      );
+
+      updatedTrip = updatedTrip.copyWith(
+        distanceRemainingKm: distance,
+        hasArrived: distance < 0.05, // 50 meters
       );
     }
 
     state = state.copyWith(
-      activeTrip: updatedTrip,
+      currentLocation: loc,
+      speedKmh: speed,
+      isMoving: isMoving ?? (speed > 1.0),
+      isStationary: isMoving != null ? !isMoving : (speed <= 1.0),
       locationHistory: [...state.locationHistory, loc],
-      isStationary: isMoving != null ? !isMoving : state.isStationary,
+      activeTrip: updatedTrip,
+    );
+  }
+
+  void _handleGeofence(String identifier, String action) {
+    if (state.activeTrip?.tripId != identifier) return;
+
+    final geofenceAction = GeofenceAction.fromString(action);
+
+    state = state.copyWith(
+      activeTrip: state.activeTrip?.copyWith(
+        isWithinGeofence: geofenceAction.isInside,
+      ),
     );
   }
 
@@ -86,19 +91,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
     }
   }
 
-  Future<void> captureDestination({bool reset = true}) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      if (!state.isServiceEnabled) {
-        await initializeService(_buildAdvancedConfig(reset: reset));
-      }
-      final loc = await _plugin.getCurrentPosition();
-      state = state.copyWith(pendingDestination: loc, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: "Capture Failed: $e");
-    }
-  }
-
   Future<void> startTrip({
     required double sourceLat,
     required double sourceLng,
@@ -115,7 +107,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         await initializeService(config);
       }
 
-      final currentPos = await _plugin.getCurrentPosition();
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
 
       final newTrip = TripState.newTrip(
@@ -126,7 +117,7 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         destinationLng: destinationLng,
         destinationName: name,
         geofenceRadius: geofenceRadius,
-      ).copyWith(currentLocation: currentPos);
+      );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
 
@@ -138,10 +129,8 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         'destinationLng': destinationLng,
         'destinationName': name,
         'geofenceRadius': geofenceRadius,
-        'startedAt': newTrip.startedAt?.toIso8601String(),
       });
 
-      // Register geofence for the destination
       await _plugin.addGeofence(
         tripId,
         destinationLat,
@@ -163,11 +152,7 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
       }
       await _plugin.setConfig({});
       await _plugin.stop();
-      state = state.copyWith(
-        isLoading: false,
-        activeTrip: null,
-        locationHistory: [],
-      );
+      state = state.copyWith(isLoading: false, activeTrip: null);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }

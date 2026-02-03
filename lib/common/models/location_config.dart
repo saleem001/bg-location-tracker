@@ -6,53 +6,62 @@ class TrackingPolicy {
   final int stopTimeout;
   final double movementThreshold;
   final int locationUpdateInterval;
+  final bool isMoving;
   const TrackingPolicy({
     this.accuracy = 4,
     this.distanceFilter = 10.0,
     this.stopTimeout = 5,
     this.movementThreshold = 25.0,
     this.locationUpdateInterval = 1000,
+    this.isMoving = false,
   });
 }
 
 class TrackingPolicyBuilder {
-  int _a = 4;
-  double _df = 10.0;
-  int _st = 5;
-  double _mt = 25.0;
-  int _lui = 1000;
+  int _accuracy = 4;
+  double _distanceFilter = 10.0;
+  int _stopTimeout = 5;
+  double _movementThreshold = 25.0;
+  int _locationUpdateInterval = 1000;
+  bool _isMoving = false;
 
   TrackingPolicyBuilder setAccuracy(int v) {
-    _a = v;
+    _accuracy = v;
     return this;
   }
 
   TrackingPolicyBuilder setDistanceFilter(double v) {
-    _df = v;
+    _distanceFilter = v;
     return this;
   }
 
   TrackingPolicyBuilder setStopTimeout(int v) {
-    _st = v;
+    _stopTimeout = v;
     return this;
   }
 
   TrackingPolicyBuilder setMovementThreshold(double v) {
-    _mt = v;
+    _movementThreshold = v;
     return this;
   }
 
   TrackingPolicyBuilder setLocationUpdateInterval(int v) {
-    _lui = v;
+    _locationUpdateInterval = v;
+    return this;
+  }
+
+  TrackingPolicyBuilder setIsMoving(bool v) {
+    _isMoving = v;
     return this;
   }
 
   TrackingPolicy build() => TrackingPolicy(
-    accuracy: _a,
-    distanceFilter: _df,
-    stopTimeout: _st,
-    movementThreshold: _mt,
-    locationUpdateInterval: _lui,
+    accuracy: _accuracy,
+    distanceFilter: _distanceFilter,
+    stopTimeout: _stopTimeout,
+    movementThreshold: _movementThreshold,
+    locationUpdateInterval: _locationUpdateInterval,
+    isMoving: _isMoving,
   );
 }
 
@@ -68,27 +77,30 @@ class DataSyncPolicy {
 }
 
 class DataSyncPolicyBuilder {
-  String? _u;
-  DomainTransistorToken? _t;
-  bool _as = true;
+  String? _uploadUrl;
+  DomainTransistorToken? _transistorToken;
+  bool _autoSync = true;
 
   DataSyncPolicyBuilder setUploadUrl(String? v) {
-    _u = v;
+    _uploadUrl = v;
     return this;
   }
 
   DataSyncPolicyBuilder setTransistorToken(DomainTransistorToken? v) {
-    _t = v;
+    _transistorToken = v;
     return this;
   }
 
   DataSyncPolicyBuilder setAutoSync(bool v) {
-    _as = v;
+    _autoSync = v;
     return this;
   }
 
-  DataSyncPolicy build() =>
-      DataSyncPolicy(uploadUrl: _u, transistorToken: _t, autoSync: _as);
+  DataSyncPolicy build() => DataSyncPolicy(
+    uploadUrl: _uploadUrl,
+    transistorToken: _transistorToken,
+    autoSync: _autoSync,
+  );
 }
 
 class PersistencePolicy {
@@ -98,48 +110,109 @@ class PersistencePolicy {
 }
 
 class PersistencePolicyBuilder {
-  int _d = -1;
-  int _m = 2; // 2 = PersistMode.all
+  int _maxDaysToPersist = -1;
+  int _persistMode = 2; // 2 = PersistMode.all
 
   PersistencePolicyBuilder setMaxDaysToPersist(int v) {
-    _d = v;
+    _maxDaysToPersist = v;
     return this;
   }
 
   PersistencePolicyBuilder setPersistMode(int v) {
-    _m = v;
+    _persistMode = v;
     return this;
   }
 
-  PersistencePolicy build() =>
-      PersistencePolicy(maxDaysToPersist: _d, persistMode: _m);
+  PersistencePolicy build() => PersistencePolicy(
+    maxDaysToPersist: _maxDaysToPersist,
+    persistMode: _persistMode,
+  );
 }
 
 class LifecyclePolicy {
   final bool stopOnTerminate;
   final bool startOnBoot;
+  final int heartbeatInterval;
   const LifecyclePolicy({
     this.stopOnTerminate = false,
     this.startOnBoot = true,
+    this.heartbeatInterval = 60,
   });
 }
 
 class LifecyclePolicyBuilder {
-  bool _sot = false;
-  bool _sob = true;
+  bool _stopOnTerminate = false;
+  bool _startOnBoot = true;
+  int _heartbeatInterval = 60;
 
   LifecyclePolicyBuilder setStopOnTerminate(bool v) {
-    _sot = v;
+    _stopOnTerminate = v;
     return this;
   }
 
   LifecyclePolicyBuilder setStartOnBoot(bool v) {
-    _sob = v;
+    _startOnBoot = v;
     return this;
   }
 
-  LifecyclePolicy build() =>
-      LifecyclePolicy(stopOnTerminate: _sot, startOnBoot: _sob);
+  LifecyclePolicyBuilder setHeartbeatInterval(int v) {
+    _heartbeatInterval = v;
+    return this;
+  }
+
+  LifecyclePolicy build() => LifecyclePolicy(
+    stopOnTerminate: _stopOnTerminate,
+    startOnBoot: _startOnBoot,
+    heartbeatInterval: _heartbeatInterval,
+  );
+}
+
+class RationalePolicy {
+  final String title;
+  final String message;
+  final String positiveAction;
+  final String negativeAction;
+
+  const RationalePolicy({
+    this.title = "Allow Location Access",
+    this.message = "This app collects location data to record your trips.",
+    this.positiveAction = "Settings",
+    this.negativeAction = "Cancel",
+  });
+}
+
+class RationalePolicyBuilder {
+  String _title = "Allow Location Access";
+  String _message = "This app collects location data to record your trips.";
+  String _positiveAction = "Settings";
+  String _negativeAction = "Cancel";
+
+  RationalePolicyBuilder setTitle(String v) {
+    _title = v;
+    return this;
+  }
+
+  RationalePolicyBuilder setMessage(String v) {
+    _message = v;
+    return this;
+  }
+
+  RationalePolicyBuilder setPositiveAction(String v) {
+    _positiveAction = v;
+    return this;
+  }
+
+  RationalePolicyBuilder setNegativeAction(String v) {
+    _negativeAction = v;
+    return this;
+  }
+
+  RationalePolicy build() => RationalePolicy(
+    title: _title,
+    message: _message,
+    positiveAction: _positiveAction,
+    negativeAction: _negativeAction,
+  );
 }
 
 class NotificationPolicy {
@@ -154,27 +227,27 @@ class NotificationPolicy {
 }
 
 class NotificationPolicyBuilder {
-  String _t = "Tracking";
-  String _m = "Active";
-  int _p = 0;
+  String _title = "Tracking";
+  String _message = "Active";
+  int _priority = 0;
 
   NotificationPolicyBuilder setTitle(String v) {
-    _t = v;
+    _title = v;
     return this;
   }
 
   NotificationPolicyBuilder setMessage(String v) {
-    _m = v;
+    _message = v;
     return this;
   }
 
   NotificationPolicyBuilder setPriority(int v) {
-    _p = v;
+    _priority = v;
     return this;
   }
 
   NotificationPolicy build() =>
-      NotificationPolicy(title: _t, message: _m, priority: _p);
+      NotificationPolicy(title: _title, message: _message, priority: _priority);
 }
 
 class LoggingPolicy {
@@ -184,20 +257,20 @@ class LoggingPolicy {
 }
 
 class LoggingPolicyBuilder {
-  int _l = 2;
-  bool _d = true;
+  int _logLevel = 2;
+  bool _debug = true;
 
   LoggingPolicyBuilder setLogLevel(int v) {
-    _l = v;
+    _logLevel = v;
     return this;
   }
 
   LoggingPolicyBuilder setDebug(bool v) {
-    _d = v;
+    _debug = v;
     return this;
   }
 
-  LoggingPolicy build() => LoggingPolicy(logLevel: _l, debug: _d);
+  LoggingPolicy build() => LoggingPolicy(logLevel: _logLevel, debug: _debug);
 }
 
 class LocationManagerConfig {
@@ -207,6 +280,7 @@ class LocationManagerConfig {
   final LifecyclePolicy lifecycle;
   final NotificationPolicy notification;
   final LoggingPolicy logging;
+  final RationalePolicy rationale;
   final bool reset;
   final double arrivalRadius;
 
@@ -217,51 +291,58 @@ class LocationManagerConfig {
     required this.lifecycle,
     required this.notification,
     required this.logging,
+    required this.rationale,
     this.reset = false,
     this.arrivalRadius = 2000.0,
   });
 }
 
 class LocationManagerConfigBuilder {
-  TrackingPolicy _t = const TrackingPolicy();
-  DataSyncPolicy _s = const DataSyncPolicy();
-  PersistencePolicy _p = const PersistencePolicy();
-  LifecyclePolicy _l = const LifecyclePolicy();
-  NotificationPolicy _n = const NotificationPolicy(
+  TrackingPolicy _tracking = const TrackingPolicy();
+  DataSyncPolicy _sync = const DataSyncPolicy();
+  PersistencePolicy _persistence = const PersistencePolicy();
+  LifecyclePolicy _lifecycle = const LifecyclePolicy();
+  NotificationPolicy _notification = const NotificationPolicy(
     title: "Tracking",
     message: "Active",
   );
-  LoggingPolicy _lg = const LoggingPolicy();
+  LoggingPolicy _logging = const LoggingPolicy();
+  RationalePolicy _rationale = const RationalePolicy();
   bool _reset = false;
-  double _r = 2000.0;
+  double _arrivalRadius = 2000.0;
 
   LocationManagerConfigBuilder setTracking(TrackingPolicy v) {
-    _t = v;
+    _tracking = v;
     return this;
   }
 
   LocationManagerConfigBuilder setSync(DataSyncPolicy v) {
-    _s = v;
+    _sync = v;
     return this;
   }
 
   LocationManagerConfigBuilder setPersistence(PersistencePolicy v) {
-    _p = v;
+    _persistence = v;
     return this;
   }
 
   LocationManagerConfigBuilder setLifecycle(LifecyclePolicy v) {
-    _l = v;
+    _lifecycle = v;
     return this;
   }
 
   LocationManagerConfigBuilder setNotification(NotificationPolicy v) {
-    _n = v;
+    _notification = v;
     return this;
   }
 
   LocationManagerConfigBuilder setLogging(LoggingPolicy v) {
-    _lg = v;
+    _logging = v;
+    return this;
+  }
+
+  LocationManagerConfigBuilder setRationale(RationalePolicy v) {
+    _rationale = v;
     return this;
   }
 
@@ -271,18 +352,19 @@ class LocationManagerConfigBuilder {
   }
 
   LocationManagerConfigBuilder setArrivalRadius(double v) {
-    _r = v;
+    _arrivalRadius = v;
     return this;
   }
 
   LocationManagerConfig build() => LocationManagerConfig(
-    tracking: _t,
-    sync: _s,
-    persistence: _p,
-    lifecycle: _l,
-    notification: _n,
-    logging: _lg,
+    tracking: _tracking,
+    sync: _sync,
+    persistence: _persistence,
+    lifecycle: _lifecycle,
+    notification: _notification,
+    logging: _logging,
+    rationale: _rationale,
     reset: _reset,
-    arrivalRadius: _r,
+    arrivalRadius: _arrivalRadius,
   );
 }

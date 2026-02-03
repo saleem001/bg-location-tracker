@@ -1,4 +1,4 @@
-import 'location_events.dart';
+import 'tracking_events.dart';
 
 class TripState {
   final String tripId;
@@ -7,17 +7,13 @@ class TripState {
   final double destinationLat;
   final double destinationLng;
   final String destinationName;
-  final LocationEntity? currentLocation;
-  final List<LocationEntity> history;
-  final double speedKmh;
   final double distanceRemainingKm;
-  final bool isMoving;
-  final bool isStationary;
   final bool hasArrived;
   final bool isWithinGeofence;
   final double geofenceRadius;
   final DateTime? startedAt;
   final DateTime? arrivedAt;
+  final DateTime? estimatedArrivalTime;
 
   TripState({
     required this.tripId,
@@ -26,17 +22,13 @@ class TripState {
     required this.destinationLat,
     required this.destinationLng,
     required this.destinationName,
-    this.currentLocation,
-    this.history = const [],
-    this.speedKmh = 0.0,
     this.distanceRemainingKm = 0.0,
-    this.isMoving = false,
-    this.isStationary = false,
     this.hasArrived = false,
     this.isWithinGeofence = false,
     this.geofenceRadius = 200.0,
     this.startedAt,
     this.arrivedAt,
+    this.estimatedArrivalTime,
   });
 
   factory TripState.newTrip({
@@ -59,16 +51,12 @@ class TripState {
   );
 
   TripState copyWith({
-    LocationEntity? currentLocation,
-    List<LocationEntity>? history,
-    double? speedKmh,
     double? distanceRemainingKm,
-    bool? isMoving,
-    bool? isStationary,
     bool? hasArrived,
     bool? isWithinGeofence,
     double? geofenceRadius,
     DateTime? arrivedAt,
+    DateTime? estimatedArrivalTime,
   }) => TripState(
     tripId: tripId,
     sourceLat: sourceLat,
@@ -76,36 +64,41 @@ class TripState {
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
-    currentLocation: currentLocation ?? this.currentLocation,
-    history: history ?? this.history,
-    speedKmh: speedKmh ?? this.speedKmh,
     distanceRemainingKm: distanceRemainingKm ?? this.distanceRemainingKm,
-    isMoving: isMoving ?? this.isMoving,
-    isStationary: isStationary ?? this.isStationary,
     hasArrived: hasArrived ?? this.hasArrived,
     isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
     geofenceRadius: geofenceRadius ?? this.geofenceRadius,
     startedAt: startedAt,
     arrivedAt: arrivedAt ?? this.arrivedAt,
+    estimatedArrivalTime: estimatedArrivalTime ?? this.estimatedArrivalTime,
   );
 }
 
 class LocationState {
   final bool isServiceEnabled;
   final bool isStationary;
+  final bool isMoving;
   final bool isLoading;
   final TripState? activeTrip;
-  final List<LocationEntity> locationHistory;
-  final LocationEntity? pendingDestination;
+
+  // Device-level tracking data
+  final LocationTrackingEvent? currentLocation;
+  final List<LocationTrackingEvent> locationHistory;
+  final double speedKmh;
+
+  final LocationTrackingEvent? pendingDestination;
   final String? lastActivity;
   final String? error;
 
   LocationState({
     this.isServiceEnabled = false,
     this.isStationary = false,
+    this.isMoving = false,
     this.isLoading = false,
     this.activeTrip,
+    this.currentLocation,
     this.locationHistory = const [],
+    this.speedKmh = 0.0,
     this.pendingDestination,
     this.lastActivity,
     this.error,
@@ -116,18 +109,24 @@ class LocationState {
   LocationState copyWith({
     bool? isServiceEnabled,
     bool? isStationary,
+    bool? isMoving,
     bool? isLoading,
     TripState? activeTrip,
-    List<LocationEntity>? locationHistory,
-    LocationEntity? pendingDestination,
+    LocationTrackingEvent? currentLocation,
+    List<LocationTrackingEvent>? locationHistory,
+    double? speedKmh,
+    LocationTrackingEvent? pendingDestination,
     String? lastActivity,
     String? error,
   }) => LocationState(
     isServiceEnabled: isServiceEnabled ?? this.isServiceEnabled,
     isStationary: isStationary ?? this.isStationary,
+    isMoving: isMoving ?? this.isMoving,
     isLoading: isLoading ?? this.isLoading,
     activeTrip: activeTrip ?? this.activeTrip,
+    currentLocation: currentLocation ?? this.currentLocation,
     locationHistory: locationHistory ?? this.locationHistory,
+    speedKmh: speedKmh ?? this.speedKmh,
     pendingDestination: pendingDestination ?? this.pendingDestination,
     lastActivity: lastActivity ?? this.lastActivity,
     error: error ?? this.error,

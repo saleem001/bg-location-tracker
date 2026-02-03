@@ -1,18 +1,21 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:track_me/common/mapper/location_models_mapper.dart';
-import '../models/location_events.dart';
+import 'package:track_me/common/models/tracking_events.dart';
 import '../models/location_config.dart';
 
 abstract class ILocationPlugin {
   Future<bool> initialize(LocationManagerConfig config);
   Future<void> start();
   Future<void> stop();
-  Future<LocationEntity> getCurrentPosition();
-  void onLocation(void Function(LocationEntity) s, [void Function(dynamic)? f]);
+  Future<LocationTrackingEvent> getCurrentPosition();
+  void onLocation(
+    void Function(LocationTrackingEvent) s, [
+    void Function(dynamic)? f,
+  ]);
   void onGeofence(void Function(String identifier, String action) callback);
   void onEnabledChange(void Function(bool) c);
-  void onMotionChange(void Function(LocationEntity, bool) c);
+  void onMotionChange(void Function(LocationTrackingEvent, bool) c);
   void removeListeners();
   Future<void> setConfig(Map<String, dynamic> extras);
   Future<void> addGeofence(String id, double lat, double lng, double radius);
@@ -69,31 +72,12 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
   Future<void> stop() => bg.BackgroundGeolocation.stop();
 
   @override
-  Future<void> addGeofence(String id, double lat, double lng, double radius) {
-    return bg.BackgroundGeolocation.addGeofence(
-      bg.Geofence(
-        identifier: id,
-        radius: radius,
-        latitude: lat,
-        longitude: lng,
-        notifyOnEntry: true,
-        notifyOnExit: true,
-      ),
-    );
-  }
-
-  @override
-  Future<void> removeGeofence(String id) {
-    return bg.BackgroundGeolocation.removeGeofence(id);
-  }
-
-  @override
-  Future<LocationEntity> getCurrentPosition() async {
+  Future<LocationTrackingEvent> getCurrentPosition() async {
     final location = await bg.BackgroundGeolocation.getCurrentPosition(
       persist: false,
       samples: 1,
     );
-    return LocationEntity(
+    return LocationTrackingEvent(
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
       speed: location.coords.speed,
@@ -103,12 +87,37 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
   }
 
   @override
+  Future<void> removeGeofence(String id) {
+    return bg.BackgroundGeolocation.removeGeofence(id);
+  }
+
+  Future<void> addGeofence(
+    String id,
+    double lat,
+    double lng,
+    double radius, [
+    bool notifyOnEntry = true,
+    bool notifyOnExit = true,
+  ]) {
+    return bg.BackgroundGeolocation.addGeofence(
+      bg.Geofence(
+        identifier: id,
+        radius: radius,
+        latitude: lat,
+        longitude: lng,
+        notifyOnEntry: notifyOnEntry,
+        notifyOnExit: notifyOnExit,
+      ),
+    );
+  }
+
+  @override
   void onLocation(
-    void Function(LocationEntity) s, [
+    void Function(LocationTrackingEvent) s, [
     void Function(dynamic)? f,
   ]) => bg.BackgroundGeolocation.onLocation(
     (l) => s(
-      LocationEntity(
+      LocationTrackingEvent(
         latitude: l.coords.latitude,
         longitude: l.coords.longitude,
         speed: l.coords.speed,
@@ -130,10 +139,10 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
   void onEnabledChange(void Function(bool) c) =>
       bg.BackgroundGeolocation.onEnabledChange(c);
   @override
-  void onMotionChange(void Function(LocationEntity, bool) c) =>
+  void onMotionChange(void Function(LocationTrackingEvent, bool) c) =>
       bg.BackgroundGeolocation.onMotionChange(
         (location) => c(
-          LocationEntity(
+          LocationTrackingEvent(
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             speed: location.coords.speed,
