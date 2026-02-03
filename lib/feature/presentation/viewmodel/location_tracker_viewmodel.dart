@@ -21,7 +21,10 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
 
   void _initSubscribers() {
     // Primary location updates
-    _plugin.onLocation(_handleLocation);
+    _plugin.onLocation((loc) {
+      _handleLocation(loc);
+    });
+
     // Fires when movement state changes (moving <-> stationary)
     _plugin.onMotionChange((loc, isMoving) {
       _handleLocation(loc, isMoving: isMoving);
@@ -29,10 +32,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   void _handleLocation(LocationEntity loc, {bool? isMoving}) {
-    print(
-      "SCREEN UPDATE: Lat: ${loc.latitude}, Lng: ${loc.longitude}, Speed: ${loc.speed}, Odometer: ${loc.odometer}",
-    );
-
     final speedKmh = loc.speed * 3.6;
     TripState? updatedTrip;
 
@@ -98,10 +97,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         await initializeService(config);
       }
 
-      if (reset) {
-        await _plugin.setOdometer(0.0);
-      }
-
       final currentPos = await _plugin.getCurrentPosition();
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
 
@@ -112,7 +107,8 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         destinationName: name,
       ).copyWith(currentLocation: currentPos);
 
-      // Store trip data in SDK extras for persistence across restarts
+      state = state.copyWith(isLoading: false, activeTrip: newTrip);
+
       await _plugin.setConfig({
         'tripId': tripId,
         'destinationLat': lat,
@@ -122,8 +118,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
       });
 
       await _plugin.start();
-
-      state = state.copyWith(isLoading: false, activeTrip: newTrip);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Start Failed: $e");
     }
@@ -149,10 +143,8 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
     return LocationManagerConfigBuilder()
         .setTracking(
           TrackingPolicyBuilder()
-              .setAccuracy(5) // Navigation Accuracy
-              .setDistanceFilter(
-                5,
-              ) // Update every 5 meters for more frequent UI updates
+              .setAccuracy(5)
+              .setDistanceFilter(5)
               .setMovementThreshold(5)
               .build(),
         )
@@ -164,8 +156,8 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         )
         .setNotification(
           NotificationPolicyBuilder()
-              .setTitle("Swvl Track Me")
-              .setMessage("Tracking your activity in background")
+              .setTitle("Location Tracking Active")
+              .setMessage("Updating position, speed, and odometer")
               .build(),
         )
         .setLogging(
