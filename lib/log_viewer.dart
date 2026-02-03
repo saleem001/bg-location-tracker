@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'common/providers/location_providers.dart';
+import 'feature/presentation/viewmodel/location_tracker_viewmodel.dart';
 
 class LogViewerScreen extends ConsumerStatefulWidget {
   const LogViewerScreen({super.key});
@@ -16,29 +16,29 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLogs();
+    // _loadLogs();
   }
 
-  Future<void> _loadLogs() async {
-    try {
-      final service = ref.read(locationServiceProvider.notifier);
-      final logs = await service.getNativeLogs();
-      setState(() {
-        _logs = logs;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _logs = "Error loading logs: $e";
-        _isLoading = false;
-      });
-    }
-  }
+  // Future<void> _loadLogs() async {
+  //   try {
+  //     final service = ref.read(locationTrackerViewModelProvider.notifier);
+  //     final logs = await service.getNativeLogs();
+  //     setState(() {
+  //       _logs = logs;
+  //       _isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       _logs = "Error loading logs: $e";
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 
   Future<void> _clearLogs() async {
     try {
-      final service = ref.read(locationServiceProvider.notifier);
-      await service.clearNativeLogs();
+      final service = ref.read(locationTrackerViewModelProvider.notifier);
+      // await service.clearNativeLogs();
       setState(() {
         _logs = "";
       });
@@ -66,7 +66,7 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() => _isLoading = true);
-              _loadLogs();
+              // _loadLogs();
             },
           ),
         ],

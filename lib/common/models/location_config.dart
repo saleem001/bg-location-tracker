@@ -1,4 +1,4 @@
-import 'location_models.dart';
+import 'location_events.dart';
 
 class TrackingPolicy {
   final int accuracy;
@@ -146,18 +146,10 @@ class NotificationPolicy {
   final String title;
   final String message;
   final int priority;
-  final String? permissionTitle;
-  final String? permissionMessage;
-  final String? positiveAction;
-  final String? negativeAction;
   const NotificationPolicy({
     required this.title,
     required this.message,
     this.priority = 0,
-    this.permissionTitle,
-    this.permissionMessage,
-    this.positiveAction,
-    this.negativeAction,
   });
 }
 
@@ -165,10 +157,6 @@ class NotificationPolicyBuilder {
   String _t = "Tracking";
   String _m = "Active";
   int _p = 0;
-  String? _pt;
-  String? _pm;
-  String? _pa;
-  String? _na;
 
   NotificationPolicyBuilder setTitle(String v) {
     _t = v;
@@ -185,35 +173,8 @@ class NotificationPolicyBuilder {
     return this;
   }
 
-  NotificationPolicyBuilder setPermissionTitle(String? v) {
-    _pt = v;
-    return this;
-  }
-
-  NotificationPolicyBuilder setPermissionMessage(String? v) {
-    _pm = v;
-    return this;
-  }
-
-  NotificationPolicyBuilder setPositiveAction(String? v) {
-    _pa = v;
-    return this;
-  }
-
-  NotificationPolicyBuilder setNegativeAction(String? v) {
-    _na = v;
-    return this;
-  }
-
-  NotificationPolicy build() => NotificationPolicy(
-    title: _t,
-    message: _m,
-    priority: _p,
-    permissionTitle: _pt,
-    permissionMessage: _pm,
-    positiveAction: _pa,
-    negativeAction: _na,
-  );
+  NotificationPolicy build() =>
+      NotificationPolicy(title: _t, message: _m, priority: _p);
 }
 
 class LoggingPolicy {
