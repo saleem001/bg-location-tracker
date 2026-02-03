@@ -128,7 +128,6 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
     try {
       await _plugin.setConfig({});
       await _plugin.stop();
-      await _plugin.removeGeofences();
       state = state.copyWith(
         isLoading: false,
         activeTrip: null,

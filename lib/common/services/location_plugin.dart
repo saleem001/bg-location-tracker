@@ -1,21 +1,19 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:track_me/common/mapper/location_models_mapper.dart';
 import '../models/location_events.dart';
 import '../models/location_config.dart';
-import '../mapper/location_models_mapper.dart';
 
 abstract class ILocationPlugin {
   Future<bool> initialize(LocationManagerConfig config);
   Future<void> start();
   Future<void> stop();
   Future<LocationEntity> getCurrentPosition();
-  Future<void> removeGeofences();
   void onLocation(void Function(LocationEntity) s, [void Function(dynamic)? f]);
+  void onEnabledChange(void Function(bool) c);
   void onMotionChange(void Function(LocationEntity, bool) c);
   void removeListeners();
-  Future<bool> restoreState();
   Future<void> setConfig(Map<String, dynamic> extras);
-  Future<double> setOdometer(double value);
 }
 
 class BackgroundGeolocationPlugin implements ILocationPlugin {
@@ -58,19 +56,12 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
   }
 
   @override
-  Future<bool> restoreState() async {
-    final state = await bg.BackgroundGeolocation.state;
-    return state.enabled;
-  }
-
-  @override
   Future<void> setConfig(Map<String, dynamic> extras) async {
     await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
   }
 
   @override
   Future<void> start() => bg.BackgroundGeolocation.start();
-
   @override
   Future<void> stop() => bg.BackgroundGeolocation.stop();
 
@@ -80,63 +71,49 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
       persist: false,
       samples: 1,
     );
-    return LocationMapper().map(location);
+    return LocationEntity(
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      speed: location.coords.speed,
+      odometer: location.odometer,
+      timestamp: DateTime.parse(location.timestamp),
+    );
   }
-
-  @override
-  Future<void> removeGeofences() => bg.BackgroundGeolocation.removeGeofences();
 
   @override
   void onLocation(
     void Function(LocationEntity) s, [
     void Function(dynamic)? f,
-  ]) =>
-      bg.BackgroundGeolocation.onLocation((l) => s(LocationMapper().map(l)), f);
-
-  @override
-  void onGeofence(void Function(GeofenceEvent) c) =>
-      bg.BackgroundGeolocation.onGeofence(
-        (e) => c(GeofenceEventMapper().map(e)),
-      );
-
-  @override
-  void onActivityChange(void Function(ActivityChangeEvent) c) =>
-      bg.BackgroundGeolocation.onActivityChange(
-        (e) => c(ActivityChangeEventMapper().map(e)),
-      );
+  ]) => bg.BackgroundGeolocation.onLocation(
+    (l) => s(
+      LocationEntity(
+        latitude: l.coords.latitude,
+        longitude: l.coords.longitude,
+        speed: l.coords.speed,
+        odometer: l.odometer,
+        timestamp: DateTime.parse(l.timestamp),
+      ),
+    ),
+    f,
+  );
 
   @override
   void onEnabledChange(void Function(bool) c) =>
       bg.BackgroundGeolocation.onEnabledChange(c);
-
   @override
   void onMotionChange(void Function(LocationEntity, bool) c) =>
       bg.BackgroundGeolocation.onMotionChange(
-        (location) => c(LocationMapper().map(location), location.isMoving),
+        (location) => c(
+          LocationEntity(
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            speed: location.coords.speed,
+            odometer: location.odometer,
+            timestamp: DateTime.parse(location.timestamp),
+          ),
+          location.isMoving,
+        ),
       );
-
   @override
   void removeListeners() => bg.BackgroundGeolocation.removeListeners();
-
-  @override
-  Future<void> changePace(bool isMoving) =>
-      bg.BackgroundGeolocation.changePace(isMoving);
-
-  @override
-  Future<int> getAuthorizationStatus() async {
-    final state = await bg.BackgroundGeolocation.state;
-    return state.map['authorizationStatus'] ?? 0;
-  }
-
-  @override
-  Future<String> getLog() => bg.Logger.getLog();
-
-  @override
-  Future<bool> destroyLog() => bg.Logger.destroyLog();
-
-  @override
-  Future<double> setOdometer(double value) async {
-    final location = await bg.BackgroundGeolocation.setOdometer(value);
-    return location.odometer;
-  }
 }
