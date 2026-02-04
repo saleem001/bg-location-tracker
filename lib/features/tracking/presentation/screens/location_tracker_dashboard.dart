@@ -16,11 +16,16 @@ class LocationDashboard extends ConsumerStatefulWidget {
   ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
 }
 
-
 class _LocationDashboardState extends ConsumerState<LocationDashboard> {
-  final TextEditingController _destLatController = TextEditingController(text: "34.743282");
-  final TextEditingController _destLngController = TextEditingController(text: "72.358245");
-  final TextEditingController _destNameController = TextEditingController(text: "Station A");
+  final TextEditingController _destLatController = TextEditingController(
+    text: "34.743282",
+  );
+  final TextEditingController _destLngController = TextEditingController(
+    text: "72.358245",
+  );
+  final TextEditingController _destNameController = TextEditingController(
+    text: "Station A",
+  );
   final MapController _mapController = MapController();
 
   @override
@@ -38,7 +43,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
               context,
               MaterialPageRoute(builder: (context) => const LogViewerScreen()),
             ),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -54,10 +59,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             const SizedBox(height: 16),
             _buildTripInfo(state),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 300,
-              child: _buildMap(state),
-            ),
+            SizedBox(height: 300, child: _buildMap(state)),
           ],
         ),
       ),
@@ -70,10 +72,21 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildStatusRow("Service", state.isServiceEnabled ? "Enabled" : "Disabled", 
-                state.isServiceEnabled ? Colors.green : Colors.red),
-            _buildStatusRow("Activity", state.isMoving ? "Moving" : "Stationary", state.isMoving ? Colors.blue : Colors.orange),
-            _buildStatusRow("Speed", "${state.speedKmh.toStringAsFixed(1)} km/h", Colors.white),
+            _buildStatusRow(
+              "Service",
+              state.isServiceEnabled ? "Enabled" : "Disabled",
+              state.isServiceEnabled ? Colors.green : Colors.red,
+            ),
+            _buildStatusRow(
+              "Activity",
+              state.isMoving ? "Moving" : "Stationary",
+              state.isMoving ? Colors.blue : Colors.orange,
+            ),
+            _buildStatusRow(
+              "Speed",
+              "${state.speedKmh.toStringAsFixed(1)} km/h",
+              Colors.white,
+            ),
             if (state.error != null)
               Text(state.error!, style: const TextStyle(color: Colors.red)),
           ],
@@ -89,7 +102,10 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -101,13 +117,29 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const Text("Trip Destination", style: TextStyle(fontWeight: FontWeight.bold)),
-            TextField(controller: _destNameController, decoration: const InputDecoration(labelText: "Name")),
+            const Text(
+              "Trip Destination",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextField(
+              controller: _destNameController,
+              decoration: const InputDecoration(labelText: "Name"),
+            ),
             Row(
               children: [
-                Expanded(child: TextField(controller: _destLatController, decoration: const InputDecoration(labelText: "Lat"))),
+                Expanded(
+                  child: TextField(
+                    controller: _destLatController,
+                    decoration: const InputDecoration(labelText: "Lat"),
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: TextField(controller: _destLngController, decoration: const InputDecoration(labelText: "Lng"))),
+                Expanded(
+                  child: TextField(
+                    controller: _destLngController,
+                    decoration: const InputDecoration(labelText: "Lng"),
+                  ),
+                ),
               ],
             ),
           ],
@@ -122,8 +154,13 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         Expanded(
           child: ElevatedButton(
             // Disable if loading OR if there's already an active trip
-            onPressed: (state.isLoading || state.activeTrip != null) ? null : () => _handleStartTrip(viewModel),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            onPressed: (state.isLoading || state.activeTrip != null)
+                ? null
+                : () => _handleStartTrip(viewModel),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
             child: const Text("Start Trip"),
           ),
         ),
@@ -131,8 +168,13 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         Expanded(
           child: ElevatedButton(
             // Disable if loading OR if there is NO active trip
-            onPressed: (state.isLoading || state.activeTrip == null) ? null : () => viewModel.stopTrip(),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: (state.isLoading || state.activeTrip == null)
+                ? null
+                : () => viewModel.stopTrip(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: const Text("Stop Trip"),
           ),
         ),
@@ -155,7 +197,11 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
           children: [
             Row(
               children: [
-                Icon(isArrived ? Icons.check_circle : Icons.navigation, color: Colors.cyan, size: 28),
+                Icon(
+                  isArrived ? Icons.check_circle : Icons.navigation,
+                  color: Colors.cyan,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -163,24 +209,37 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                     children: [
                       Text(
                         trip.destinationName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
                       ),
                       Text(
                         "Destination Station",
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black26,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     "${trip.distanceRemainingMeters.toStringAsFixed(0)}m",
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.cyanAccent),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.cyanAccent,
+                    ),
                   ),
                 ),
               ],
@@ -193,7 +252,9 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                 decoration: BoxDecoration(
                   color: Colors.greenAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
+                  border: Border.all(
+                    color: Colors.greenAccent.withOpacity(0.5),
+                  ),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -220,23 +281,31 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   }
 
   Widget _buildMap(LocationState state) {
-    final currentLatLng = state.currentLocation != null 
-        ? LatLng(state.currentLocation!.latitude, state.currentLocation!.longitude)
-        : const LatLng(34.740674, 72.361101); // Fallback to a default if no location yet
+    final currentLatLng = state.currentLocation != null
+        ? LatLng(
+            state.currentLocation!.latitude,
+            state.currentLocation!.longitude,
+          )
+        : const LatLng(
+            34.740674,
+            72.361101,
+          ); // Fallback to a default if no location yet
 
     return FlutterMap(
       mapController: _mapController,
-      options: MapOptions(
-        initialCenter: currentLatLng,
-        initialZoom: 15,
-      ),
+      options: MapOptions(initialCenter: currentLatLng, initialZoom: 15),
       children: [
-        TileLayer(urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
+        TileLayer(
+          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        ),
         if (state.activeTrip != null)
           CircleLayer(
             circles: [
               CircleMarker(
-                point: LatLng(state.activeTrip!.destinationLat, state.activeTrip!.destinationLng),
+                point: LatLng(
+                  state.activeTrip!.destinationLat,
+                  state.activeTrip!.destinationLng,
+                ),
                 radius: state.activeTrip!.geofenceRadius,
                 useRadiusInMeter: true,
                 color: Colors.cyan.withOpacity(0.2),
@@ -255,10 +324,17 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             ),
             if (state.activeTrip != null)
               Marker(
-                point: LatLng(state.activeTrip!.destinationLat, state.activeTrip!.destinationLng),
+                point: LatLng(
+                  state.activeTrip!.destinationLat,
+                  state.activeTrip!.destinationLng,
+                ),
                 width: 40,
                 height: 40,
-                child: const Icon(Icons.location_on, color: Colors.redAccent, size: 40),
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.redAccent,
+                  size: 40,
+                ),
               ),
           ],
         ),
@@ -271,7 +347,9 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     if (status.isGranted) {
       // Get real-time current position
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       await viewModel.startTrip(
@@ -283,7 +361,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         name: _destNameController.text,
       );
     } else {
-       Toast.show("Location Permission Required", duration: Toast.lengthLong);
+      Toast.show("Location Permission Required", duration: Toast.lengthLong);
     }
   }
 }

@@ -1,5 +1,5 @@
-
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import '../../domain/entities/captain_location_data.dart';
 import 'package:uuid/uuid.dart';
 

@@ -64,7 +64,8 @@ class TripState {
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
-    distanceRemainingMeters: distanceRemainingMeters ?? this.distanceRemainingMeters,
+    distanceRemainingMeters:
+        distanceRemainingMeters ?? this.distanceRemainingMeters,
     hasArrived: hasArrived ?? this.hasArrived,
     isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
     geofenceRadius: geofenceRadius ?? this.geofenceRadius,

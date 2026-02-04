@@ -1,5 +1,6 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
+import 'package:track_me/common/constants/app_constants.dart';
 import 'package:track_me/common/mapper/data_mapper.dart';
 
 class LocationTrackingEvent {
@@ -23,6 +24,66 @@ class MotionChangeEvent {
   MotionChangeEvent({required this.location, required this.isMoving});
 }
 
+enum UserActivity {
+  still,
+  walking,
+  running,
+  onFoot,
+  onBicycle,
+  inVehicle,
+  unknown;
+
+  static UserActivity fromString(String value) {
+    switch (value.toLowerCase()) {
+      case AppConstants.activityStill:
+        return UserActivity.still;
+
+      case AppConstants.activityWalking:
+        return UserActivity.walking;
+
+      case AppConstants.activityRunning:
+        return UserActivity.running;
+
+      case AppConstants.activityOnFoot:
+        return UserActivity.onFoot;
+
+      case AppConstants.activityOnBicycle:
+        return UserActivity.onBicycle;
+
+      case AppConstants.activityInVehicle:
+        return UserActivity.inVehicle;
+
+      case AppConstants.activityUnknown:
+      default:
+        return UserActivity.unknown;
+    }
+  }
+
+  /// Any form of human movement (not vehicle)
+  bool get isHumanMovement =>
+      this == UserActivity.walking ||
+      this == UserActivity.running ||
+      this == UserActivity.onFoot;
+
+  /// Vehicle-based movement
+  bool get isVehicle => this == UserActivity.inVehicle;
+
+  /// Not moving
+  bool get isStill => this == UserActivity.still;
+
+  /// Can be trusted for motion decisions
+  bool get isReliable => this != UserActivity.unknown;
+}
+
+class ActivityChangeEvent {
+  final UserActivity activity;
+  final int confidence;
+
+  ActivityChangeEvent({required this.activity, required this.confidence});
+
+  bool get isConfident => confidence >= 70;
+}
+
 class LocationMapper implements DataMapper<LocationTrackingEvent> {
   @override
   LocationTrackingEvent map(dynamic data) {
@@ -44,6 +105,17 @@ class MotionChangeEventMapper implements DataMapper<MotionChangeEvent> {
     return MotionChangeEvent(
       location: LocationMapper().map(location),
       isMoving: location.isMoving,
+    );
+  }
+}
+
+class ActivityChangeEventMapper implements DataMapper<ActivityChangeEvent> {
+  @override
+  ActivityChangeEvent map(dynamic data) {
+    final event = data as bg.ActivityChangeEvent;
+    return ActivityChangeEvent(
+      activity: UserActivity.fromString(event.activity),
+      confidence: event.confidence,
     );
   }
 }
