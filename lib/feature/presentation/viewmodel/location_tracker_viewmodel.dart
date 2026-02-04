@@ -5,19 +5,22 @@ import 'package:track_me/common/models/location_events.dart';
 import 'package:track_me/common/models/location_service_status.dart';
 import 'package:track_me/common/models/tracking_events.dart';
 import 'package:track_me/common/utils/location_utils.dart';
+import 'package:track_me/feature/presentation/providers/plugin_logs_provider.dart';
 import '../../../common/models/location_config.dart';
 import '../../../common/models/location_states.dart';
 import '../../../common/services/location_manager.dart';
 
 final locationTrackerViewModelProvider =
     StateNotifierProvider<LocationTrackerViewModel, LocationState>((ref) {
-      return LocationTrackerViewModel(BackgroundGeolocationPlugin());
+      return LocationTrackerViewModel(BackgroundGeolocationPlugin(), ref);
     });
 
 class LocationTrackerViewModel extends StateNotifier<LocationState> {
   final ILocationPlugin _plugin;
+  final Ref _ref;
 
-  LocationTrackerViewModel(this._plugin) : super(LocationState.initial()) {
+  LocationTrackerViewModel(this._plugin, this._ref)
+    : super(LocationState.initial()) {
     _initSubscribers();
   }
 
@@ -41,6 +44,17 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   void _handleLocation(LocationTrackingEvent loc, {bool? isMoving}) {
+    // Log location update
+    if (isMoving != null) {
+      _ref
+          .read(pluginLogsProvider.notifier)
+          .logMotionChange(isMoving, loc.latitude, loc.longitude);
+    } else {
+      _ref
+          .read(pluginLogsProvider.notifier)
+          .logLocation(loc.latitude, loc.longitude, loc.speed, loc.odometer);
+    }
+
     final speed = LocationUtils.msToKmh(loc.speed);
     TripState? updatedTrip = state.activeTrip;
 
@@ -69,6 +83,9 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   void _handleGeofence(String identifier, String action) {
+    // Log geofence event
+    _ref.read(pluginLogsProvider.notifier).logGeofence(identifier, action);
+
     if (state.activeTrip?.tripId != identifier) return;
 
     final geofenceAction = GeofenceAction.fromString(action);
@@ -81,6 +98,17 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
   }
 
   void _onLocationServiceStatusChange(LocationServiceStatus event) {
+    // Log provider change
+    _ref
+        .read(pluginLogsProvider.notifier)
+        .logProviderChange(
+          event.deviceLocationEnabled,
+          event.locationPermissionStatus.name,
+          event.locationAccuracy.name,
+          event.gpsEnabled,
+          event.networkEnabled,
+        );
+
     if (!event.deviceLocationEnabled) {
       // Ask user to enable location services
     }

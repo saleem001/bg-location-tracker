@@ -15,10 +15,15 @@ class LocationDashboard extends ConsumerStatefulWidget {
   ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
 }
 
-String sourceLat = "31.5863913";
-String sourceLng = "74.3925714";
-String destLat = "31.5795243";
-String destLng = "74.3825985";
+// String sourceLat = "31.5863913";
+// String sourceLng = "74.3925714";
+// String destLat = "31.5795243";
+// String destLng = "74.3825985";
+
+String sourceLat = "31.5794606";
+String sourceLng = "74.3700368";
+String destLat = "31.5794263";
+String destLng = "74.3694586";
 
 class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   final MapController _mapController = MapController();
