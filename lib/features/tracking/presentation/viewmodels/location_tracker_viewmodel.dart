@@ -86,7 +86,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     double geofenceRadius = 200.0,
     bool reset = true,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       if (!state.isServiceEnabled) {
         await _manager.initialize();
@@ -129,7 +129,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }
 
   Future<void> stopTrip() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       // 1. Stop the background geolocation service
       await _manager.stop();

@@ -117,7 +117,8 @@ class LocationState {
     LocationTrackingEvent? pendingDestination,
     String? lastActivity,
     String? error,
-    bool clearActiveTrip = false, // Added sentinel for clearing trip
+    bool clearActiveTrip = false,
+    bool clearError = false, // Added flag to clear the error
   }) => LocationState(
     isServiceEnabled: isServiceEnabled ?? this.isServiceEnabled,
     isStationary: isStationary ?? this.isStationary,
@@ -129,6 +130,6 @@ class LocationState {
     speedKmh: speedKmh ?? this.speedKmh,
     pendingDestination: pendingDestination ?? this.pendingDestination,
     lastActivity: lastActivity ?? this.lastActivity,
-    error: error ?? this.error,
+    error: clearError ? null : (error ?? this.error),
   );
 }
