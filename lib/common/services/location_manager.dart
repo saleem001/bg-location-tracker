@@ -1,6 +1,8 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:track_me/common/mapper/location_models_mapper.dart';
+import 'package:track_me/common/models/location_events.dart';
+import 'package:track_me/common/models/location_service_status.dart';
 import 'package:track_me/common/models/tracking_events.dart';
 import '../models/location_config.dart';
 
@@ -14,8 +16,11 @@ abstract class ILocationPlugin {
     void Function(dynamic)? f,
   ]);
   void onGeofence(void Function(String identifier, String action) callback);
-  void onEnabledChange(void Function(bool) c);
-  void onMotionChange(void Function(LocationTrackingEvent, bool) c);
+  void onEnabledChange(void Function(bool) callback);
+  void onMotionChange(void Function(LocationTrackingEvent, bool) callback);
+  void onLocationServiceStatusChange(
+    void Function(LocationServiceStatus) callback,
+  );
   void removeListeners();
   Future<void> setConfig(Map<String, dynamic> extras);
   Future<void> addGeofence(String id, double lat, double lng, double radius);
@@ -152,6 +157,16 @@ class BackgroundGeolocationPlugin implements ILocationPlugin {
           location.isMoving,
         ),
       );
+
+  @override
+  void onLocationServiceStatusChange(
+    void Function(LocationServiceStatus) callback,
+  ) {
+    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
+      callback(LocationServiceStatus.map(event));
+    });
+  }
+
   @override
   void removeListeners() => bg.BackgroundGeolocation.removeListeners();
 }

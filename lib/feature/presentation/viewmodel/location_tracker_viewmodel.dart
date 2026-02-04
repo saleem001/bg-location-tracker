@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:track_me/common/models/geofence_event.dart';
+import 'package:track_me/common/models/location_events.dart';
+import 'package:track_me/common/models/location_service_status.dart';
 import 'package:track_me/common/models/tracking_events.dart';
 import 'package:track_me/common/utils/location_utils.dart';
 import '../../../common/models/location_config.dart';
@@ -31,6 +33,10 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
 
     _plugin.onGeofence((identifier, action) {
       _handleGeofence(identifier, action);
+    });
+
+    _plugin.onLocationServiceStatusChange((event) {
+      _onLocationServiceStatusChange(event);
     });
   }
 
@@ -72,6 +78,21 @@ class LocationTrackerViewModel extends StateNotifier<LocationState> {
         isWithinGeofence: geofenceAction.isInside,
       ),
     );
+  }
+
+  void _onLocationServiceStatusChange(LocationServiceStatus event) {
+    if (!event.deviceLocationEnabled) {
+      // Ask user to enable location services
+    }
+
+    if (event.locationPermissionStatus !=
+        LocationPermissionStatus.allowedAlways) {
+      // Ask user to grant "Always" permission
+    }
+
+    if (event.locationAccuracy == LocationAccuracy.reduced) {
+      // Request precise location (iOS)
+    }
   }
 
   Future<void> initializeService(LocationManagerConfig config) async {

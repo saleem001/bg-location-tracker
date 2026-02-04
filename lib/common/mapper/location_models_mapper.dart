@@ -15,19 +15,6 @@ class ActivityChangeEventMapper implements DataMapper<ActivityChangeEvent> {
   }
 }
 
-class ProviderChangeEventMapper implements DataMapper<ProviderChangeEvent> {
-  @override
-  ProviderChangeEvent map(dynamic data) {
-    final event = data as bg.ProviderChangeEvent;
-    return ProviderChangeEvent(
-      enabled: event.enabled,
-      status: event.status,
-      network: event.network,
-      gps: event.gps,
-    );
-  }
-}
-
 // Top-level mapping functions for Config policies
 bg.DesiredAccuracy mapAccuracy(int l) => l >= 5
     ? bg.DesiredAccuracy.navigation

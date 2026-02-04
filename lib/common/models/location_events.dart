@@ -1,23 +1,4 @@
-class LocationEntity {
-  final double latitude;
-  final double longitude;
-  final double speed; // In m/s
-  final double odometer;
-  final DateTime timestamp;
-  LocationEntity({
-    required this.latitude,
-    required this.longitude,
-    required this.speed,
-    this.odometer = 0.0,
-    required this.timestamp,
-  });
-}
-
-class GeofenceEvent {
-  final String identifier;
-  final String action;
-  GeofenceEvent({required this.identifier, required this.action});
-}
+import 'package:track_me/common/models/tracking_events.dart';
 
 class ActivityChangeEvent {
   final String activity;
@@ -47,12 +28,6 @@ class HttpEvent {
     required this.status,
     required this.responseText,
   });
-}
-
-class MotionChangeEvent {
-  final LocationEntity location;
-  final bool isMoving;
-  MotionChangeEvent({required this.location, required this.isMoving});
 }
 
 class DomainTransistorToken {

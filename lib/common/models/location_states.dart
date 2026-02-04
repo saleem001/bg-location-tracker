@@ -13,7 +13,6 @@ class TripState {
   final double geofenceRadius;
   final DateTime? startedAt;
   final DateTime? arrivedAt;
-  final DateTime? estimatedArrivalTime;
 
   TripState({
     required this.tripId,
@@ -28,7 +27,6 @@ class TripState {
     this.geofenceRadius = 200.0,
     this.startedAt,
     this.arrivedAt,
-    this.estimatedArrivalTime,
   });
 
   factory TripState.newTrip({
@@ -56,7 +54,6 @@ class TripState {
     bool? isWithinGeofence,
     double? geofenceRadius,
     DateTime? arrivedAt,
-    DateTime? estimatedArrivalTime,
   }) => TripState(
     tripId: tripId,
     sourceLat: sourceLat,
@@ -70,7 +67,6 @@ class TripState {
     geofenceRadius: geofenceRadius ?? this.geofenceRadius,
     startedAt: startedAt,
     arrivedAt: arrivedAt ?? this.arrivedAt,
-    estimatedArrivalTime: estimatedArrivalTime ?? this.estimatedArrivalTime,
   );
 }
 
