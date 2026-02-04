@@ -72,8 +72,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
           children: [
             _buildStatusRow("Service", state.isServiceEnabled ? "Enabled" : "Disabled", 
                 state.isServiceEnabled ? Colors.green : Colors.red),
-            _buildStatusRow("Activity", state.isMoving ? "Moving" : "Stationary", 
-                state.isMoving ? Colors.blue : Colors.orange),
+            _buildStatusRow("Activity", state.isMoving ? "Moving" : "Stationary", state.isMoving ? Colors.blue : Colors.orange),
             _buildStatusRow("Speed", "${state.speedKmh.toStringAsFixed(1)} km/h", Colors.white),
             if (state.error != null)
               Text(state.error!, style: const TextStyle(color: Colors.red)),

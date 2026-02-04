@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-import 'package:uuid/uuid.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'i_tracking_transport.dart';
 import 'location_service_config.dart';
@@ -11,7 +10,6 @@ class BackgroundLocationServiceManager {
   final ITrackingTransport _transport;
   final StreamController<String> _stationAlertController = StreamController<String>.broadcast();
   final StreamController<bg.Location> _locationController = StreamController<bg.Location>.broadcast();
-  final Uuid _uuid = Uuid();
   
   // Configuration
   LocationServiceConfig _config;
