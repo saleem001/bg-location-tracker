@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:track_me/feature/presentation/view/location_tracker_dashboard.dart';
-import 'common/services/location_headless_task.dart';
+import 'package:track_me/features/tracking/data/datasources/headless_task.dart';
 import 'package:toast/toast.dart';
+
+import 'features/tracking/presentation/screens/location_tracker_dashboard.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Register Headless Task (Crucial to be here for app-kill resilience)
-  bg.BackgroundGeolocation.registerHeadlessTask(locationHeadlessTask);
+  // Register Headless Task
+  bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);
 
   runApp(const ProviderScope(child: POCApp()));
 }
@@ -31,7 +32,6 @@ class _POCAppState extends State<POCApp> {
   }
 
   Future<void> _checkLocationPermission() async {
-    // Request both location and locationAlways permissions
     await _requestPermission(Permission.location);
     await _requestPermission(Permission.locationAlways);
   }

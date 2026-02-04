@@ -1,4 +1,4 @@
-import 'tracking_events.dart';
+import '../../domain/entities/tracking_event.dart';
 
 class TripState {
   final String tripId;
@@ -7,7 +7,7 @@ class TripState {
   final double destinationLat;
   final double destinationLng;
   final String destinationName;
-  final double distanceRemainingKm;
+  final double distanceRemainingMeters;
   final bool hasArrived;
   final bool isWithinGeofence;
   final double geofenceRadius;
@@ -22,7 +22,7 @@ class TripState {
     required this.destinationLat,
     required this.destinationLng,
     required this.destinationName,
-    this.distanceRemainingKm = 0.0,
+    this.distanceRemainingMeters = 0.0,
     this.hasArrived = false,
     this.isWithinGeofence = false,
     this.geofenceRadius = 200.0,
@@ -51,7 +51,7 @@ class TripState {
   );
 
   TripState copyWith({
-    double? distanceRemainingKm,
+    double? distanceRemainingMeters,
     bool? hasArrived,
     bool? isWithinGeofence,
     double? geofenceRadius,
@@ -64,7 +64,7 @@ class TripState {
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
-    distanceRemainingKm: distanceRemainingKm ?? this.distanceRemainingKm,
+    distanceRemainingMeters: distanceRemainingMeters ?? this.distanceRemainingMeters,
     hasArrived: hasArrived ?? this.hasArrived,
     isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
     geofenceRadius: geofenceRadius ?? this.geofenceRadius,
