@@ -4,7 +4,8 @@ import '../viewmodels/location_tracker_viewmodel.dart';
 import '../../data/datasources/location_service_manager.dart';
 import '../../data/datasources/socket_tracking_transport.dart'; // I will move this too
 import '../../data/datasources/i_tracking_transport.dart'; // I will move this too
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 
 // Transport Layer Provider
 final trackingTransportProvider = Provider<ITrackingTransport>((ref) {
@@ -12,10 +13,11 @@ final trackingTransportProvider = Provider<ITrackingTransport>((ref) {
 });
 
 // Service Manager Provider
-final backgroundLocationServiceManagerProvider = Provider<BackgroundLocationServiceManager>((ref) {
-  final transport = ref.watch(trackingTransportProvider);
-  return BackgroundLocationServiceManager(transport);
-});
+final backgroundLocationServiceManagerProvider =
+    Provider<BackgroundLocationServiceManager>((ref) {
+      final transport = ref.watch(trackingTransportProvider);
+      return BackgroundLocationServiceManager(transport);
+    });
 
 // Geofence Alert Stream Provider
 final stationAlertStreamProvider = StreamProvider<String>((ref) {
@@ -32,5 +34,5 @@ final locationStreamProvider = StreamProvider<bg.Location>((ref) {
 // View Model Provider (using NotifierProvider for Riverpod 3.x)
 final locationTrackerViewModelProvider =
     NotifierProvider<LocationTrackerViewModel, LocationState>(() {
-  return LocationTrackerViewModel();
-});
+      return LocationTrackerViewModel();
+    });

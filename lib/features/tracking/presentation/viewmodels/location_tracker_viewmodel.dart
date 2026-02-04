@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
+import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../providers/tracking_providers.dart';
 import '../states/location_state.dart';
 import '../../domain/entities/tracking_event.dart';
@@ -24,10 +26,9 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     return LocationState.initial();
   }
-  
+
   // Helper to get the manager
   get _manager => ref.read(backgroundLocationServiceManagerProvider);
-
 
   void _handleLocation(bg.Location loc) {
     final trackingEvent = LocationTrackingEvent(
@@ -89,7 +90,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       if (!state.isServiceEnabled) {
-        await _manager.initialize();
+        final config = _buildAdvancedConfig(reset: reset);
+        await _manager.initialize(config);
         state = state.copyWith(isServiceEnabled: true);
       }
 
@@ -133,10 +135,10 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     try {
       // 1. Stop the background geolocation service
       await _manager.stop();
-      
+
       // 2. Update captain info to IDLE
       _manager.updateCaptainInfo(tripStatus: "IDLE");
-      
+
       // 3. Fully reset the state
       state = state.copyWith(
         isLoading: false,
@@ -149,5 +151,33 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }
+  }
+
+  LocationManagerConfig _buildAdvancedConfig({required bool reset}) {
+    return LocationManagerConfigBuilder()
+        .setTracking(
+          TrackingPolicyBuilder()
+              .setAccuracy(5)
+              .setDistanceFilter(5)
+              .setMovementThreshold(5)
+              .build(),
+        )
+        .setLifecycle(
+          LifecyclePolicyBuilder()
+              .setStopOnTerminate(false)
+              .setStartOnBoot(true)
+              .build(),
+        )
+        .setNotification(
+          NotificationPolicyBuilder()
+              .setTitle("Location Tracking Active")
+              .setMessage("Updating position, speed, and odometer")
+              .build(),
+        )
+        .setLogging(
+          LoggingPolicyBuilder().setLogLevel(2).setDebug(true).build(),
+        )
+        .setReset(reset)
+        .build();
   }
 }
