@@ -81,7 +81,6 @@ class LocationState {
   final bool isLoading;
   final TripState? activeTrip;
 
-  // Device-level tracking data
   final LocationTrackingEvent? currentLocation;
   final List<LocationTrackingEvent> locationHistory;
   final double speedKmh;
@@ -118,12 +117,13 @@ class LocationState {
     LocationTrackingEvent? pendingDestination,
     String? lastActivity,
     String? error,
+    bool clearActiveTrip = false, // Added sentinel for clearing trip
   }) => LocationState(
     isServiceEnabled: isServiceEnabled ?? this.isServiceEnabled,
     isStationary: isStationary ?? this.isStationary,
     isMoving: isMoving ?? this.isMoving,
     isLoading: isLoading ?? this.isLoading,
-    activeTrip: activeTrip ?? this.activeTrip,
+    activeTrip: clearActiveTrip ? null : (activeTrip ?? this.activeTrip),
     currentLocation: currentLocation ?? this.currentLocation,
     locationHistory: locationHistory ?? this.locationHistory,
     speedKmh: speedKmh ?? this.speedKmh,

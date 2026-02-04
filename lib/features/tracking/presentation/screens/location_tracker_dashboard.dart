@@ -7,6 +7,7 @@ import '../states/location_state.dart';
 import '../providers/tracking_providers.dart';
 import '../../../../log_viewer.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 
 class LocationDashboard extends ConsumerStatefulWidget {
   const LocationDashboard({super.key});
@@ -15,9 +16,6 @@ class LocationDashboard extends ConsumerStatefulWidget {
   ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
 }
 
-// zeeshan latlong
-String sourceLat = "34.740674";
-String sourceLng = "72.361101";
 
 class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   final TextEditingController _destLatController = TextEditingController(text: "34.743282");
@@ -124,7 +122,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       children: [
         Expanded(
           child: ElevatedButton(
-            onPressed: state.isLoading ? null : () => _handleStartTrip(viewModel),
+            // Disable if loading OR if there's already an active trip
+            onPressed: (state.isLoading || state.activeTrip != null) ? null : () => _handleStartTrip(viewModel),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
             child: const Text("Start Trip"),
           ),
@@ -132,6 +131,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(
+            // Disable if loading OR if there is NO active trip
             onPressed: (state.isLoading || state.activeTrip == null) ? null : () => viewModel.stopTrip(),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text("Stop Trip"),
@@ -223,7 +223,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   Widget _buildMap(LocationState state) {
     final currentLatLng = state.currentLocation != null 
         ? LatLng(state.currentLocation!.latitude, state.currentLocation!.longitude)
-        : LatLng(double.parse(sourceLat), double.parse(sourceLng));
+        : const LatLng(34.740674, 72.361101); // Fallback to a default if no location yet
 
     return FlutterMap(
       mapController: _mapController,
@@ -270,9 +270,15 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   Future<void> _handleStartTrip(dynamic viewModel) async {
     final status = await Permission.locationAlways.request();
     if (status.isGranted) {
+      // Get real-time current position
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
       await viewModel.startTrip(
-        sourceLat: double.parse(sourceLat),
-        sourceLng: double.parse(sourceLng),
+        geofenceRadius: 300.0,
+        sourceLat: position.latitude,
+        sourceLng: position.longitude,
         destinationLat: double.parse(_destLatController.text),
         destinationLng: double.parse(_destLngController.text),
         name: _destNameController.text,

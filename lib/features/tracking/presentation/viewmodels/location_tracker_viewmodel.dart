@@ -129,11 +129,23 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }
 
   Future<void> stopTrip() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
+      // 1. Stop the background geolocation service
       await _manager.stop();
+      
+      // 2. Update captain info to IDLE
       _manager.updateCaptainInfo(tripStatus: "IDLE");
-      state = state.copyWith(isLoading: false, activeTrip: null);
+      
+      // 3. Fully reset the state
+      state = state.copyWith(
+        isLoading: false,
+        clearActiveTrip: true, // Use the new flag to properly clear the trip
+        isServiceEnabled: false,
+        isMoving: false,
+        isStationary: true,
+        speedKmh: 0.0,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }
