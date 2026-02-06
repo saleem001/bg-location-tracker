@@ -50,7 +50,7 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
   }
 
   /// Add a provider change log
-  void logProviderChange(
+  void logServiceStatusChange(
     bool enabled,
     String permissionStatus,
     String accuracy,

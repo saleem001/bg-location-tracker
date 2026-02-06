@@ -9,12 +9,14 @@ class LocationTrackingEvent {
   final double speed; // received in m/s
   final double odometer; // received in meters
   final DateTime timestamp;
+  final bool isMoving;
   LocationTrackingEvent({
     required this.latitude,
     required this.longitude,
     required this.speed,
     this.odometer = 0.0,
     required this.timestamp,
+    this.isMoving = false,
   });
 }
 
@@ -84,7 +86,7 @@ class ActivityChangeEvent {
   bool get isConfident => confidence >= 70;
 }
 
-class LocationMapper implements DataMapper<LocationTrackingEvent> {
+class LocationTrackingEventMapper implements DataMapper<LocationTrackingEvent> {
   @override
   LocationTrackingEvent map(dynamic data) {
     final location = data as bg.Location;
@@ -94,6 +96,7 @@ class LocationMapper implements DataMapper<LocationTrackingEvent> {
       speed: location.coords.speed,
       odometer: location.odometer,
       timestamp: DateTime.parse(location.timestamp),
+      isMoving: location.isMoving,
     );
   }
 }
@@ -103,7 +106,7 @@ class MotionChangeEventMapper implements DataMapper<MotionChangeEvent> {
   MotionChangeEvent map(dynamic data) {
     final location = data as bg.Location;
     return MotionChangeEvent(
-      location: LocationMapper().map(location),
+      location: LocationTrackingEventMapper().map(location),
       isMoving: location.isMoving,
     );
   }

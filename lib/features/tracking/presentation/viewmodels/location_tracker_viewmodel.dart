@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../providers/tracking_providers.dart';
 import '../states/location_state.dart';
+
+import '../../domain/entities/geofence_event.dart';
 import '../../domain/entities/tracking_event.dart';
 import '../../../../common/utils/location_utils.dart';
+import '../../presentation/providers/plugin_logs_provider.dart';
 
 class LocationTrackerViewModel extends Notifier<LocationState> {
   @override
@@ -18,9 +19,25 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     });
 
     // Listen to geofence alerts via Provider
-    ref.listen(stationAlertStreamProvider, (previous, next) {
+    ref.listen(geofenceStreamProvider, (previous, next) {
       if (next.hasValue) {
-        _handleGeofence(next.value!, "ENTER");
+        _handleGeofence(next.value!);
+      }
+    });
+
+    // Listen to service status via Provider
+    ref.listen(serviceStatusStreamProvider, (previous, next) {
+      if (next.hasValue) {
+        final status = next.value!;
+        ref
+            .read(pluginLogsProvider.notifier)
+            .logServiceStatusChange(
+              status.deviceLocationEnabled,
+              status.locationPermissionStatus.name,
+              status.locationAccuracy.name,
+              status.gpsEnabled,
+              status.networkEnabled,
+            );
       }
     });
 
@@ -28,24 +45,16 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }
 
   // Helper to get the manager
-  get _manager => ref.read(backgroundLocationServiceManagerProvider);
+  get _manager => ref.watch(backgroundLocationServiceManagerProvider);
 
-  void _handleLocation(bg.Location loc) {
-    final trackingEvent = LocationTrackingEvent(
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-      speed: loc.coords.speed,
-      odometer: loc.odometer,
-      timestamp: DateTime.parse(loc.timestamp),
-    );
-
-    final speed = LocationUtils.msToKmh(trackingEvent.speed);
+  void _handleLocation(LocationTrackingEvent loc) {
+    final speed = LocationUtils.msToKmh(loc.speed);
     TripState? updatedTrip = state.activeTrip;
 
     if (updatedTrip != null) {
       final distance = LocationUtils.calculateDistanceMeters(
-        trackingEvent.latitude,
-        trackingEvent.longitude,
+        loc.latitude,
+        loc.longitude,
         updatedTrip.destinationLat,
         updatedTrip.destinationLng,
       );
@@ -57,21 +66,30 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     }
 
     state = state.copyWith(
-      currentLocation: trackingEvent,
+      currentLocation: loc,
       speedKmh: speed,
       isMoving: loc.isMoving,
       isStationary: !loc.isMoving,
-      locationHistory: [...state.locationHistory, trackingEvent],
+      locationHistory: [...state.locationHistory, loc],
       activeTrip: updatedTrip,
     );
+
+    // Log location
+    ref
+        .watch(pluginLogsProvider.notifier)
+        .logLocation(loc.latitude, loc.longitude, loc.speed, loc.odometer);
   }
 
-  void _handleGeofence(String identifier, String action) {
-    if (state.activeTrip?.tripId != identifier) return;
+  void _handleGeofence(GeofenceEvent event) {
+    ref
+        .watch(pluginLogsProvider.notifier)
+        .logGeofence(event.identifier, event.action.name.toUpperCase());
+
+    if (state.activeTrip?.tripId != event.identifier) return;
 
     state = state.copyWith(
       activeTrip: state.activeTrip?.copyWith(
-        isWithinGeofence: action == "ENTER",
+        isWithinGeofence: event.action == GeofenceAction.enter,
       ),
     );
   }
@@ -87,6 +105,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     double geofenceRadius = 200.0,
     bool reset = true,
   }) async {
+    if (state.isLoading || state.activeTrip != null) return;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       if (!state.isServiceEnabled) {
@@ -125,7 +144,12 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       ]);
 
       await _manager.start();
+
+      ref.watch(pluginLogsProvider.notifier).logInfo("Trip started: $tripId");
     } catch (e) {
+      ref
+          .watch(pluginLogsProvider.notifier)
+          .logError("Start Trip Failed", error: e);
       state = state.copyWith(isLoading: false, error: "Start Failed: $e");
     }
   }
@@ -148,7 +172,12 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         isStationary: true,
         speedKmh: 0.0,
       );
+
+      ref.watch(pluginLogsProvider.notifier).logInfo("Trip stopped");
     } catch (e) {
+      ref
+          .watch(pluginLogsProvider.notifier)
+          .logError("Stop Trip Failed", error: e);
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }
   }

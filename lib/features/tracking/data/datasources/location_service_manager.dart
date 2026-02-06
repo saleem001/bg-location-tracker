@@ -3,33 +3,87 @@ import 'dart:io';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:track_me/common/constants/app_constants.dart';
+
 import 'package:track_me/common/mapper/location_data_mapper.dart';
 import 'package:track_me/features/tracking/data/datasources/ILocationTracking.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
 import 'i_tracking_transport.dart';
 import 'location_service_config.dart';
 import 'location_payload_builder.dart';
 
-class BackgroundLocationServiceManager implements ILocationTracking {
+class BackgroundLocationServiceManager {
   final ITrackingTransport _transport;
-  final StreamController<String> _stationAlertController =
-      StreamController<String>.broadcast();
-  final StreamController<bg.Location> _locationController =
-      StreamController<bg.Location>.broadcast();
+
+  //streams broadcast to control app's public streams
+  late StreamController<GeofenceEvent> _geofenceController =
+      StreamController<GeofenceEvent>.broadcast();
+  late StreamController<LocationTrackingEvent> _locationController =
+      StreamController<LocationTrackingEvent>.broadcast();
+  late StreamController<LocationServiceStatus> _serviceStatusController =
+      StreamController<LocationServiceStatus>.broadcast();
+  late StreamController<MotionChangeEvent> _motionController =
+      StreamController<MotionChangeEvent>.broadcast();
+
+  Stream<GeofenceEvent> get geofenceStream => _geofenceController.stream;
+
+  Stream<LocationTrackingEvent> get locationStream =>
+      _locationController.stream;
+
+  Stream<LocationServiceStatus> get serviceStatusStream =>
+      _serviceStatusController.stream;
+
+  Stream<MotionChangeEvent> get motionStream => _motionController.stream;
+
+  //stream subscriptions for background location plugin
+  bool _locationAttached = false;
+  bool _geofenceAttached = false;
+  bool _serviceStatusAttached = false;
+  bool _motionAttached = false;
 
   // Configuration
   LocationServiceConfig _config;
 
   BackgroundLocationServiceManager(this._transport)
-    : _config = LocationServiceConfig();
+    : _config = LocationServiceConfig() {
+    //these are just stream initializers not listeners
+    initLocationStream();
+    initGeofenceStream();
+    initServiceStatusStream();
+    initMotionStream();
+  }
 
-  Stream<String> get stationAlertStream => _stationAlertController.stream;
-  Stream<bg.Location> get locationStream => _locationController.stream;
+  void initLocationStream() {
+    _locationController = StreamController<LocationTrackingEvent>.broadcast(
+      onListen: _attachLocationListener,
+      onCancel: _detachIfUnused,
+    );
+  }
 
-  @override
+  void initGeofenceStream() {
+    _geofenceController = StreamController<GeofenceEvent>.broadcast(
+      onListen: _attachGeofenceListener,
+      onCancel: _detachIfUnused,
+    );
+  }
+
+  void initServiceStatusStream() {
+    _serviceStatusController =
+        StreamController<LocationServiceStatus>.broadcast(
+          onListen: _attachServiceStatusListener,
+          onCancel: _detachIfUnused,
+        );
+  }
+
+  void initMotionStream() {
+    _motionController = StreamController<MotionChangeEvent>.broadcast(
+      onListen: _attachMotionListener,
+      onCancel: _detachIfUnused,
+    );
+  }
+
   Future<bool> initialize(LocationManagerConfig config) async {
     final bgConfig = bg.Config(
       reset: config.reset,
@@ -63,32 +117,75 @@ class BackgroundLocationServiceManager implements ILocationTracking {
     return state.enabled;
   }
 
-  @override
   Future<void> setConfig(Map<String, dynamic> extras) async {
     await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
   }
 
-  @override
+  void _attachLocationListener() {
+    if (_locationAttached) return;
+    _locationAttached = true;
+
+    bg.BackgroundGeolocation.onLocation(
+      (bg.Location location) {
+        if (!_locationController.isClosed) {
+          _locationController.add(LocationTrackingEventMapper().map(location));
+        }
+      },
+      (bg.LocationError error) {
+        if (!_locationController.isClosed) {
+          _locationController.addError(error);
+        }
+      },
+    );
+  }
+
+  void _attachGeofenceListener() {
+    if (_geofenceAttached) return;
+    _geofenceAttached = true;
+
+    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) {
+      if (!_geofenceController.isClosed) {
+        final mapped = GeofenceEventMapper().map(event);
+        if (mapped.action == GeofenceAction.enter) {
+          _geofenceController.add(mapped);
+        }
+      }
+    });
+  }
+
+  void _attachServiceStatusListener() {
+    if (_serviceStatusAttached) return;
+    _serviceStatusAttached = true;
+
+    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
+      if (!_serviceStatusController.isClosed) {
+        _serviceStatusController.add(LocationServiceStatus.map(event));
+      }
+    });
+  }
+
+  void _attachMotionListener() {
+    if (_motionAttached) return;
+    _motionAttached = true;
+
+    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
+      if (!_motionController.isClosed) {
+        _motionController.add(MotionChangeEventMapper().map(location));
+      }
+    });
+  }
+
   Future<void> start() => bg.BackgroundGeolocation.start();
-  @override
   Future<void> stop() => bg.BackgroundGeolocation.stop();
 
-  @override
   Future<LocationTrackingEvent> getCurrentPosition() async {
     final location = await bg.BackgroundGeolocation.getCurrentPosition(
       persist: false,
       samples: 1,
     );
-    return LocationTrackingEvent(
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      speed: location.coords.speed,
-      odometer: location.odometer,
-      timestamp: DateTime.parse(location.timestamp),
-    );
+    return LocationTrackingEventMapper().map(location);
   }
 
-  @override
   Future<void> removeGeofence(String id) {
     return bg.BackgroundGeolocation.removeGeofence(id);
   }
@@ -113,61 +210,8 @@ class BackgroundLocationServiceManager implements ILocationTracking {
     );
   }
 
-  @override
-  void onLocation(
-    void Function(LocationTrackingEvent) s, [
-    void Function(dynamic)? f,
-  ]) => bg.BackgroundGeolocation.onLocation(
-    (l) => s(
-      LocationTrackingEvent(
-        latitude: l.coords.latitude,
-        longitude: l.coords.longitude,
-        speed: l.coords.speed,
-        odometer: l.odometer,
-        timestamp: DateTime.parse(l.timestamp),
-      ),
-    ),
-    f,
-  );
-
-  @override
-  void onGeofence(void Function(String identifier, String action) callback) {
-    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) {
-      if (event.action == AppConstants.geofenceActionEnter) {
-        _stationAlertController.add(event.identifier);
-      }
-    });
-  }
-
-  @override
   void onEnabledChange(void Function(bool) c) =>
       bg.BackgroundGeolocation.onEnabledChange(c);
-  @override
-  void onMotionChange(void Function(LocationTrackingEvent, bool) c) =>
-      bg.BackgroundGeolocation.onMotionChange(
-        (location) => c(
-          LocationTrackingEvent(
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            speed: location.coords.speed,
-            odometer: location.odometer,
-            timestamp: DateTime.parse(location.timestamp),
-          ),
-          location.isMoving,
-        ),
-      );
-
-  @override
-  void onLocationServiceStatusChange(
-    void Function(LocationServiceStatus) callback,
-  ) {
-    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
-      callback(LocationServiceStatus.map(event));
-    });
-  }
-
-  @override
-  void removeListeners() => bg.BackgroundGeolocation.removeListeners();
 
   void updateCaptainInfo({
     String? captainId,
@@ -220,5 +264,29 @@ class BackgroundLocationServiceManager implements ILocationTracking {
         .build();
 
     await _transport.sendLocation(payload);
+  }
+
+  void _detachIfUnused() {
+    if (_locationController.hasListener ||
+        _geofenceController.hasListener ||
+        _serviceStatusController.hasListener) {
+      return;
+    }
+
+    // Plugin only supports global removal
+    bg.BackgroundGeolocation.removeListeners();
+
+    _locationAttached = false;
+    _geofenceAttached = false;
+    _serviceStatusAttached = false;
+  }
+
+  //Cleanup
+  @override
+  void dispose() {
+    bg.BackgroundGeolocation.removeListeners();
+    _locationController.close();
+    _geofenceController.close();
+    _serviceStatusController.close();
   }
 }
