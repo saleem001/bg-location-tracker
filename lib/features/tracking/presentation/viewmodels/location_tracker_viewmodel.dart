@@ -99,7 +99,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         tripStatus: "ON_TRIP",
       );
 
-      final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
+      final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
 
       final newTrip = TripState.newTrip(
         tripId: tripId,

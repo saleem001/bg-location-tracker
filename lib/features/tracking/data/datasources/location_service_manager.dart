@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:toast/toast.dart';
 import 'i_tracking_transport.dart';
 import 'location_service_config.dart';
 import 'location_payload_builder.dart';
+import '../../../../common/utils/notification_service.dart';
 
 class BackgroundLocationServiceManager {
   final ITrackingTransport _transport;
@@ -22,7 +25,7 @@ class BackgroundLocationServiceManager {
   Future<void> initialize() async {
     await bg.BackgroundGeolocation.ready(bg.Config(
       desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-      distanceFilter: 10.0,
+      distanceFilter: 1,
       stopOnTerminate: false,
       startOnBoot: true,
       enableHeadless: true,
@@ -34,17 +37,58 @@ class BackgroundLocationServiceManager {
         message: "Your location is used to track your trips and ensure safety.",
         positiveAction: "Allow",
         negativeAction: "Cancel"
+      ),
+      // Fast transition settings
+      stationaryRadius: 25,
+      activityRecognitionInterval: 1000,
+      stopTimeout: 1,
+      heartbeatInterval: 60,
+      
+      // High frequency updates
+      locationUpdateInterval: 1000,
+      fastestLocationUpdateInterval: 1000,
+      
+      // Optimization and reliability
+      elasticityMultiplier: 1.0,
+      pausesLocationUpdatesAutomatically: false,
+      preventSuspend: true,
+      
+      notification: bg.Notification(
+        title: "Tracking Active",
+        text: "Ensuring accurate trip monitoring",
+        color: "#2196F3",
       )
     ));
 
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
       _locationController.add(location);
       _sendLocation(location);
+    }, (bg.LocationError error) {
+      print('[onLocation] ERROR: ${error} - ${error.toString()}');
+      Toast.show(
+        '[onLocation] ERROR: ${error} - ${error.toString()}',
+        duration: Toast.lengthLong,
+        gravity: Toast.bottom,
+      );
     });
 
-    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) {
+    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
+      _locationController.add(location);
+      print('[onMotionChange] isMoving: ${location.isMoving}');
+    });
+
+    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) async {
       if (event.action == "ENTER") {
         _stationAlertController.add(event.identifier);
+        
+        // Extract name from identifier (tripId:::StationName)
+        String displayName = event.identifier;
+        if (displayName.contains(":::")) {
+          displayName = displayName.split(":::").last;
+        }
+        
+        // Vibrate and Show Local Notification
+        await NotificationService().showGeofenceAlert(displayName);
       }
     });
   }
@@ -78,14 +122,17 @@ class BackgroundLocationServiceManager {
 
   Future<void> start() async {
     await bg.BackgroundGeolocation.start();
+    // Force the plugin into the 'moving' state to ensure immediate location updates
+    await bg.BackgroundGeolocation.changePace(true);
   }
 
   Future<void> stop() async {
+    await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
   }
 
   Future<void> _sendLocation(bg.Location location) async {
-    final connectivity = await Connectivity().checkConnectivity();
+    final List<ConnectivityResult> connectivity = await Connectivity().checkConnectivity();
     final deviceName = Platform.isAndroid ? "Android" : "iOS";
     
     final payload = LocationPayloadBuilder()
@@ -100,8 +147,8 @@ class BackgroundLocationServiceManager {
           batteryLevel: 100.0, // Should get real battery level
         )
         .setNetworkInfo(
-          isOnline: connectivity != ConnectivityResult.none,
-          connectionType: connectivity.toString(),
+          isOnline: !connectivity.contains(ConnectivityResult.none),
+          connectionType: connectivity.isNotEmpty ? connectivity.first.toString().split('.').last : "none",
         )
         .build();
 

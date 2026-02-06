@@ -4,12 +4,16 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
     as bg;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:track_me/features/tracking/data/datasources/headless_task.dart';
+import 'package:track_me/common/utils/notification_service.dart';
 import 'package:toast/toast.dart';
 
 import 'features/tracking/presentation/screens/location_tracker_dashboard.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Local Notifications
+  NotificationService().init();
 
   // Register Headless Task
   bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);

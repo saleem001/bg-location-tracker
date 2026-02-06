@@ -275,7 +275,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       );
 
       await viewModel.startTrip(
-        geofenceRadius: 300.0,
+        geofenceRadius: 380.0,
         sourceLat: position.latitude,
         sourceLng: position.longitude,
         destinationLat: double.parse(_destLatController.text),
