@@ -231,7 +231,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         initialZoom: 15,
       ),
       children: [
-        TileLayer(urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
+        TileLayer(urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", userAgentPackageName: 'com.example.track_me_test_project',),
         if (state.activeTrip != null)
           CircleLayer(
             circles: [
