@@ -5,7 +5,6 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:track_me/common/mapper/location_data_mapper.dart';
-import 'package:track_me/features/tracking/data/datasources/ILocationTracking.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
