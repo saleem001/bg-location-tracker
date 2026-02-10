@@ -11,6 +11,9 @@ import '../../presentation/providers/plugin_logs_provider.dart';
 class LocationTrackerViewModel extends Notifier<LocationState> {
   @override
   LocationState build() {
+    // Ensure LocationUpdateService is active
+    ref.watch(locationUpdateServiceProvider);
+
     // Listen to location stream via Provider
     ref.listen(locationStreamProvider, (previous, next) {
       if (next.hasValue) {
@@ -110,15 +113,14 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     try {
       if (!state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
-        await _manager.initialize(config);
+        await _manager
+            .initLocationStream()
+            .initStationGeofenceStream()
+            .initServiceStatusStream()
+            .initMotionStream()
+            .initialize(config);
         state = state.copyWith(isServiceEnabled: true);
       }
-
-      _manager.updateCaptainInfo(
-        captainId: captainId,
-        rideId: rideId,
-        tripStatus: "ON_TRIP",
-      );
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
 
@@ -130,6 +132,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         destinationLng: destinationLng,
         destinationName: name,
         geofenceRadius: geofenceRadius,
+        captainId: captainId,
+        rideId: rideId,
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);

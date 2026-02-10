@@ -1,89 +1,77 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:connectivity_plus/connectivity_plus.dart';
-
 import 'package:track_me/common/mapper/location_data_mapper.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
-import 'i_tracking_transport.dart';
-import 'location_service_config.dart';
-import 'location_payload_builder.dart';
+import 'package:track_me/features/tracking/domain/entities/location_service_streams.dart';
 
+/// Manages the background location plugin and exposes mapped domain streams.
+/// Uses a fluent API for configuration and an aggregator for stream access.
 class BackgroundLocationServiceManager {
-  final ITrackingTransport _transport;
+  // Private Controllers Container - Handles the "Input" side
+  late final _ManagerControllers _internal;
 
-  //streams broadcast to control app's public streams
-  late StreamController<GeofenceEvent> _geofenceController =
-      StreamController<GeofenceEvent>.broadcast();
-  late StreamController<LocationTrackingEvent> _locationController =
-      StreamController<LocationTrackingEvent>.broadcast();
-  late StreamController<LocationServiceStatus> _serviceStatusController =
-      StreamController<LocationServiceStatus>.broadcast();
-  late StreamController<MotionChangeEvent> _motionController =
-      StreamController<MotionChangeEvent>.broadcast();
+  // Public Stream Aggregator - Handles the "Output" side
+  late final LocationServiceStreams streams;
 
-  Stream<GeofenceEvent> get geofenceStream => _geofenceController.stream;
+  // Registry to track which plugin listeners are currently native-attached.
+  final Set<String> _attached = {};
 
-  Stream<LocationTrackingEvent> get locationStream =>
-      _locationController.stream;
+  // Registry to track which features were explicitly enabled via chaining.
+  // This prevents accidental attachments for unwanted features.
+  final Set<String> _enabledFeatures = {};
 
-  Stream<LocationServiceStatus> get serviceStatusStream =>
-      _serviceStatusController.stream;
+  BackgroundLocationServiceManager() {
+    _internal = _ManagerControllers(
+      onLocationListen: _onLocationListen,
+      onGeofenceListen: _onGeofenceListen,
+      onStatusListen: _onStatusListen,
+      onMotionListen: _onMotionListen,
+      onAnyCancel: _detachIfUnused,
+    );
 
-  Stream<MotionChangeEvent> get motionStream => _motionController.stream;
-
-  //stream subscriptions for background location plugin
-  bool _locationAttached = false;
-  bool _geofenceAttached = false;
-  bool _serviceStatusAttached = false;
-  bool _motionAttached = false;
-
-  // Configuration
-  LocationServiceConfig _config;
-
-  BackgroundLocationServiceManager(this._transport)
-    : _config = LocationServiceConfig() {
-    //these are just stream initializers not listeners
-    initLocationStream();
-    initGeofenceStream();
-    initServiceStatusStream();
-    initMotionStream();
-  }
-
-  void initLocationStream() {
-    _locationController = StreamController<LocationTrackingEvent>.broadcast(
-      onListen: _attachLocationListener,
-      onCancel: _detachIfUnused,
+    streams = LocationServiceStreams(
+      geofence: _internal.geofence.stream,
+      location: _internal.location.stream,
+      serviceStatus: _internal.serviceStatus.stream,
+      motion: _internal.motion.stream,
     );
   }
 
-  void initGeofenceStream() {
-    _geofenceController = StreamController<GeofenceEvent>.broadcast(
-      onListen: _attachGeofenceListener,
-      onCancel: _detachIfUnused,
-    );
+  // ---------------------------------------------------------------------------
+  // Fluent Initialization & Configuration (Chaining)
+  // ---------------------------------------------------------------------------
+
+  /// Enables the Location Stream for this session.
+  BackgroundLocationServiceManager initLocationStream() {
+    _enabledFeatures.add('location');
+    return this;
   }
 
-  void initServiceStatusStream() {
-    _serviceStatusController =
-        StreamController<LocationServiceStatus>.broadcast(
-          onListen: _attachServiceStatusListener,
-          onCancel: _detachIfUnused,
-        );
+  /// Enables the Station Geofence Stream for this session.
+  BackgroundLocationServiceManager initStationGeofenceStream() {
+    _enabledFeatures.add('geofence');
+    return this;
   }
 
-  void initMotionStream() {
-    _motionController = StreamController<MotionChangeEvent>.broadcast(
-      onListen: _attachMotionListener,
-      onCancel: _detachIfUnused,
-    );
+  /// Enables the Service Status Stream for this session.
+  BackgroundLocationServiceManager initServiceStatusStream() {
+    _enabledFeatures.add('status');
+    return this;
   }
 
-  Future<bool> initialize(LocationManagerConfig config) async {
+  /// Enables the Motion Change Stream for this session.
+  BackgroundLocationServiceManager initMotionStream() {
+    _enabledFeatures.add('motion');
+    return this;
+  }
+
+  Future<BackgroundLocationServiceManager> initialize(
+    LocationManagerConfig config,
+  ) async {
     final bgConfig = bg.Config(
       reset: config.reset,
       debug: config.logging.debug,
@@ -112,121 +100,68 @@ class BackgroundLocationServiceManager {
       ),
     );
 
-    final state = await bg.BackgroundGeolocation.ready(bgConfig);
-    return state.enabled;
+    await bg.BackgroundGeolocation.ready(bgConfig);
+    return this;
   }
+
+  // ---------------------------------------------------------------------------
+  // Internal Registry & Listener Logic
+  // ---------------------------------------------------------------------------
+
+  /// Ensures a plugin listener is registered exactly once, only if enabled in chain.
+  void _ensureAttached(String featureKey, void Function() register) {
+    if (!_enabledFeatures.contains(featureKey)) return;
+    if (_attached.add(featureKey)) register();
+  }
+
+  void _onLocationListen() => _ensureAttached('location', () {
+    bg.BackgroundGeolocation.onLocation(
+      (loc) => _internal.location.add(LocationTrackingEventMapper().map(loc)),
+      (err) => _internal.location.addError(err),
+    );
+  });
+
+  void _onGeofenceListen() => _ensureAttached('geofence', () {
+    bg.BackgroundGeolocation.onGeofence((event) {
+      final mapped = GeofenceEventMapper().map(event);
+      if (mapped.action == GeofenceAction.enter) _internal.geofence.add(mapped);
+    });
+  });
+
+  void _onStatusListen() => _ensureAttached('status', () {
+    bg.BackgroundGeolocation.onProviderChange(
+      (event) => _internal.serviceStatus.add(LocationServiceStatus.map(event)),
+    );
+  });
+
+  void _onMotionListen() => _ensureAttached('motion', () {
+    bg.BackgroundGeolocation.onMotionChange(
+      (loc) => _internal.motion.add(MotionChangeEventMapper().map(loc)),
+    );
+  });
+
+  void _detachIfUnused() {
+    if (_internal.hasListeners) return;
+    bg.BackgroundGeolocation.removeListeners();
+    _attached.clear();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Public Actions
+  // ---------------------------------------------------------------------------
+
+  Future<void> start() => bg.BackgroundGeolocation.start();
+  Future<void> stop() => bg.BackgroundGeolocation.stop();
+
+  void onServiceEnabledChange(void Function(bool) callback) =>
+      bg.BackgroundGeolocation.onEnabledChange(callback);
 
   Future<void> setConfig(Map<String, dynamic> extras) async {
     await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
   }
 
-  void _attachLocationListener() {
-    if (_locationAttached) return;
-    _locationAttached = true;
-
-    bg.BackgroundGeolocation.onLocation(
-      (bg.Location location) {
-        if (!_locationController.isClosed) {
-          _locationController.add(LocationTrackingEventMapper().map(location));
-        }
-      },
-      (bg.LocationError error) {
-        if (!_locationController.isClosed) {
-          _locationController.addError(error);
-        }
-      },
-    );
-  }
-
-  void _attachGeofenceListener() {
-    if (_geofenceAttached) return;
-    _geofenceAttached = true;
-
-    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) {
-      if (!_geofenceController.isClosed) {
-        final mapped = GeofenceEventMapper().map(event);
-        if (mapped.action == GeofenceAction.enter) {
-          _geofenceController.add(mapped);
-        }
-      }
-    });
-  }
-
-  void _attachServiceStatusListener() {
-    if (_serviceStatusAttached) return;
-    _serviceStatusAttached = true;
-
-    bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
-      if (!_serviceStatusController.isClosed) {
-        _serviceStatusController.add(LocationServiceStatus.map(event));
-      }
-    });
-  }
-
-  void _attachMotionListener() {
-    if (_motionAttached) return;
-    _motionAttached = true;
-
-    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      if (!_motionController.isClosed) {
-        _motionController.add(MotionChangeEventMapper().map(location));
-      }
-    });
-  }
-
-  Future<void> start() => bg.BackgroundGeolocation.start();
-  Future<void> stop() => bg.BackgroundGeolocation.stop();
-
-  Future<LocationTrackingEvent> getCurrentPosition() async {
-    final location = await bg.BackgroundGeolocation.getCurrentPosition(
-      persist: false,
-      samples: 1,
-    );
-    return LocationTrackingEventMapper().map(location);
-  }
-
-  Future<void> removeGeofence(String id) {
-    return bg.BackgroundGeolocation.removeGeofence(id);
-  }
-
-  Future<void> addGeofence(
-    String id,
-    double lat,
-    double lng,
-    double radius, [
-    bool notifyOnEntry = true,
-    bool notifyOnExit = true,
-  ]) {
-    return bg.BackgroundGeolocation.addGeofence(
-      bg.Geofence(
-        identifier: id,
-        radius: radius,
-        latitude: lat,
-        longitude: lng,
-        notifyOnEntry: notifyOnEntry,
-        notifyOnExit: notifyOnExit,
-      ),
-    );
-  }
-
-  void onEnabledChange(void Function(bool) c) =>
-      bg.BackgroundGeolocation.onEnabledChange(c);
-
-  void updateCaptainInfo({
-    String? captainId,
-    String? rideId,
-    String? tripStatus,
-  }) {
-    _config = _config.copyWith(
-      captainId: captainId,
-      rideId: rideId,
-      tripStatus: tripStatus,
-    );
-  }
-
   Future<void> setStationGeofences(List<Map<String, dynamic>> stations) async {
     await bg.BackgroundGeolocation.removeGeofences();
-
     for (var station in stations) {
       await bg.BackgroundGeolocation.addGeofence(
         bg.Geofence(
@@ -241,51 +176,83 @@ class BackgroundLocationServiceManager {
     }
   }
 
-  Future<void> _sendLocation(bg.Location location) async {
-    final connectivity = await Connectivity().checkConnectivity();
-    final deviceName = Platform.isAndroid ? "Android" : "iOS";
-
-    final payload = LocationPayloadBuilder()
-        .setLocation(location)
-        .setCaptainInfo(
-          captainId: _config.captainId ?? "UNKNOWN",
-          rideId: _config.rideId ?? "IDLE",
-          tripStatus: _config.tripStatus ?? "IDLE",
-        )
-        .setDeviceInfo(
-          deviceName: deviceName,
-          batteryLevel: 100.0, // Should get real battery level
-        )
-        .setNetworkInfo(
-          isOnline: connectivity != ConnectivityResult.none,
-          connectionType: connectivity.toString(),
-        )
-        .build();
-
-    await _transport.sendLocation(payload);
+  Future<LocationTrackingEvent> getCurrentPosition() async {
+    final location = await bg.BackgroundGeolocation.getCurrentPosition(
+      persist: false,
+      samples: 1,
+    );
+    return LocationTrackingEventMapper().map(location);
   }
 
-  void _detachIfUnused() {
-    if (_locationController.hasListener ||
-        _geofenceController.hasListener ||
-        _serviceStatusController.hasListener) {
-      return;
-    }
-
-    // Plugin only supports global removal
-    bg.BackgroundGeolocation.removeListeners();
-
-    _locationAttached = false;
-    _geofenceAttached = false;
-    _serviceStatusAttached = false;
+  Future<void> addStationGeofence(
+    String id,
+    double lat,
+    double lng,
+    double rad, [
+    bool onEntry = true,
+    bool onExit = true,
+  ]) {
+    return bg.BackgroundGeolocation.addGeofence(
+      bg.Geofence(
+        identifier: id,
+        radius: rad,
+        latitude: lat,
+        longitude: lng,
+        notifyOnEntry: onEntry,
+        notifyOnExit: onExit,
+      ),
+    );
   }
 
-  //Cleanup
-  @override
+  Future<void> removeStationGeofence(String id) =>
+      bg.BackgroundGeolocation.removeGeofence(id);
+
   void dispose() {
     bg.BackgroundGeolocation.removeListeners();
-    _locationController.close();
-    _geofenceController.close();
-    _serviceStatusController.close();
+    _internal.dispose();
+  }
+}
+
+/// Helper container to group private controllers and centralize listener checks.
+class _ManagerControllers {
+  final StreamController<GeofenceEvent> geofence;
+  final StreamController<LocationTrackingEvent> location;
+  final StreamController<LocationServiceStatus> serviceStatus;
+  final StreamController<MotionChangeEvent> motion;
+
+  _ManagerControllers({
+    required void Function() onLocationListen,
+    required void Function() onGeofenceListen,
+    required void Function() onStatusListen,
+    required void Function() onMotionListen,
+    required void Function() onAnyCancel,
+  }) : geofence = StreamController<GeofenceEvent>.broadcast(
+         onListen: onGeofenceListen,
+         onCancel: onAnyCancel,
+       ),
+       location = StreamController<LocationTrackingEvent>.broadcast(
+         onListen: onLocationListen,
+         onCancel: onAnyCancel,
+       ),
+       serviceStatus = StreamController<LocationServiceStatus>.broadcast(
+         onListen: onStatusListen,
+         onCancel: onAnyCancel,
+       ),
+       motion = StreamController<MotionChangeEvent>.broadcast(
+         onListen: onMotionListen,
+         onCancel: onAnyCancel,
+       );
+
+  bool get hasListeners =>
+      location.hasListener ||
+      geofence.hasListener ||
+      serviceStatus.hasListener ||
+      motion.hasListener;
+
+  void dispose() {
+    location.close();
+    geofence.close();
+    serviceStatus.close();
+    motion.close();
   }
 }

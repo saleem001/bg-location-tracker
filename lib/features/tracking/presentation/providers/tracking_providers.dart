@@ -8,28 +8,35 @@ import '../../data/datasources/location_service_manager.dart';
 import '../../data/datasources/socket_tracking_transport.dart'; // I will move this too
 import '../../data/datasources/i_tracking_transport.dart'; // I will move this too
 
+import 'package:track_me/features/tracking/domain/services/location_update_service.dart';
+
 // Transport Layer Provider
 final trackingTransportProvider = Provider<ITrackingTransport>((ref) {
   return SocketTrackingTransport();
 });
 
-// Service Manager Provider
+// Service Manager Provider (Concrete Implementation)
 final backgroundLocationServiceManagerProvider =
     Provider<BackgroundLocationServiceManager>((ref) {
-      final transport = ref.watch(trackingTransportProvider);
-      return BackgroundLocationServiceManager(transport);
+      return BackgroundLocationServiceManager();
     });
+
+// Location Update Service Provider (Bridge: Manager -> Transport)
+final locationUpdateServiceProvider = Provider<LocationUpdateService>((ref) {
+  final transport = ref.watch(trackingTransportProvider);
+  return LocationUpdateService(ref, transport);
+});
 
 // Geofence Alert Stream Provider
 final geofenceStreamProvider = StreamProvider<GeofenceEvent>((ref) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
-  return manager.geofenceStream;
+  return manager.streams.geofence;
 });
 
 // Location Stream Provider
 final locationStreamProvider = StreamProvider<LocationTrackingEvent>((ref) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
-  return manager.locationStream;
+  return manager.streams.location;
 });
 
 // Service Status Stream Provider
@@ -37,13 +44,13 @@ final serviceStatusStreamProvider = StreamProvider<LocationServiceStatus>((
   ref,
 ) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
-  return manager.serviceStatusStream;
+  return manager.streams.serviceStatus;
 });
 
 // Motion Stream Provider
 final motionStreamProvider = StreamProvider<MotionChangeEvent>((ref) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
-  return manager.motionStream;
+  return manager.streams.motion;
 });
 
 // View Model Provider (using NotifierProvider for Riverpod 3.x)

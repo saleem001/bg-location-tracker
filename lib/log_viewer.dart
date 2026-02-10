@@ -274,10 +274,13 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
                   return CheckboxListTile(
                     title: Row(
                       children: [
-                        Text(
-                          _getIconForType(type),
-                          style: const TextStyle(fontSize: 20),
+                        Expanded(
+                          child: Text(
+                            _getIconForType(type),
+                            style: const TextStyle(fontSize: 20),
+                          ),
                         ),
+
                         const SizedBox(width: 8),
                         Text(type.name),
                       ],

@@ -6,17 +6,32 @@ import 'package:track_me/common/mapper/data_mapper.dart';
 class LocationTrackingEvent {
   final double latitude;
   final double longitude;
+  final double accuracy;
+  final double altitude;
+  final double altitudeAccuracy;
+  final double heading;
   final double speed; // received in m/s
+  final double speedAccuracy;
   final double odometer; // received in meters
   final DateTime timestamp;
   final bool isMoving;
+  final double batteryLevel;
+  final bool isMock;
+
   LocationTrackingEvent({
     required this.latitude,
     required this.longitude,
+    required this.accuracy,
+    required this.altitude,
+    required this.altitudeAccuracy,
+    required this.heading,
     required this.speed,
+    required this.speedAccuracy,
     this.odometer = 0.0,
     required this.timestamp,
     this.isMoving = false,
+    this.batteryLevel = 0.0,
+    this.isMock = false,
   });
 }
 
@@ -93,10 +108,17 @@ class LocationTrackingEventMapper implements DataMapper<LocationTrackingEvent> {
     return LocationTrackingEvent(
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
+      accuracy: location.coords.accuracy,
+      altitude: location.coords.altitude,
+      altitudeAccuracy: location.coords.altitudeAccuracy,
+      heading: location.coords.heading,
       speed: location.coords.speed,
+      speedAccuracy: location.coords.speedAccuracy,
       odometer: location.odometer,
       timestamp: DateTime.parse(location.timestamp),
       isMoving: location.isMoving,
+      batteryLevel: location.battery.level,
+      isMock: location.mock,
     );
   }
 }
