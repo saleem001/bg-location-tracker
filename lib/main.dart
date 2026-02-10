@@ -12,7 +12,9 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Register Headless Task
-  bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);
+  bg.BackgroundGeolocation.registerHeadlessTask(
+    backgroundGeolocationHeadlessTask,
+  );
 
   runApp(const ProviderScope(child: POCApp()));
 }

@@ -1,4 +1,3 @@
-
 class LocationServiceConfig {
   final bool includeBattery;
   final bool includeDevice;

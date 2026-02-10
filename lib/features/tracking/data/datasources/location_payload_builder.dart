@@ -1,19 +1,17 @@
-
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
-import '../../domain/entities/captain_location_data.dart';
+import 'package:track_me/features/tracking/domain/entities/captain_location_data.dart';
+import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:uuid/uuid.dart';
 
 class LocationPayloadBuilder {
-  bg.Location? _location;
+  LocationTrackingEvent? _location;
   String? _captainId;
   String? _rideId;
   String? _tripStatus;
-  String? _deviceName;
   double? _batteryLevel;
   bool? _isOnline;
   String? _connectionType;
 
-  LocationPayloadBuilder setLocation(bg.Location location) {
+  LocationPayloadBuilder setLocationFromEvent(LocationTrackingEvent location) {
     _location = location;
     return this;
   }
@@ -29,11 +27,7 @@ class LocationPayloadBuilder {
     return this;
   }
 
-  LocationPayloadBuilder setDeviceInfo({
-    required String deviceName,
-    required double batteryLevel,
-  }) {
-    _deviceName = deviceName;
+  LocationPayloadBuilder setDeviceInfo({required double batteryLevel}) {
     _batteryLevel = batteryLevel;
     return this;
   }
@@ -51,20 +45,20 @@ class LocationPayloadBuilder {
     if (_location == null) throw Exception("Location is required");
 
     final locationData = LocationData(
-      accuracy: _location!.coords.accuracy.toString(),
-      altitude: _location!.coords.altitude.toString(),
+      accuracy: _location!.accuracy.toString(),
+      altitude: _location!.altitude.toString(),
       androidId: "UNKNOWN", // Should get real android ID
-      bearing: _location!.coords.heading.toString(),
+      bearing: _location!.heading.toString(),
       bearingAccuracyDegrees: "0.0",
       elapsedRealtimeNanos: "0",
-      lat: _location!.coords.latitude.toString(),
-      lng: _location!.coords.longitude.toString(),
+      lat: _location!.latitude.toString(),
+      lng: _location!.longitude.toString(),
       runCounter: "1",
       sequence: "1",
-      speed: _location!.coords.speed.toString(),
-      speedAccuracyMetersPerSecond: _location!.coords.speedAccuracy.toString(),
-      timeUtc: _location!.timestamp,
-      verticalAccuracyMeters: _location!.coords.altitudeAccuracy.toString(),
+      speed: _location!.speed.toString(),
+      speedAccuracyMetersPerSecond: _location!.speedAccuracy.toString(),
+      timeUtc: _location!.timestamp.toIso8601String(),
+      verticalAccuracyMeters: _location!.altitudeAccuracy.toString(),
     );
 
     final payloadData = LocationPayloadData(

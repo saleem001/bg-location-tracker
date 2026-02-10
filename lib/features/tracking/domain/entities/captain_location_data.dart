@@ -1,4 +1,3 @@
-
 class CaptainLocationData {
   final String batchNumber;
   final String captainId;
@@ -11,10 +10,10 @@ class CaptainLocationData {
   });
 
   Map<String, dynamic> toJson() => {
-        "batch_number": batchNumber,
-        "captain": captainId,
-        "data": data.toJson(),
-      };
+    "batch_number": batchNumber,
+    "captain": captainId,
+    "data": data.toJson(),
+  };
 }
 
 class LocationPayloadData {
@@ -44,17 +43,17 @@ class LocationPayloadData {
 
   Map<String, dynamic> toJson() {
     return {
-        if (battery != null) "battery": battery!.toJson(),
-        if (device != null) "device": device!.toJson(),
-        "failed_attempts_count": failedAttemptsCount,
-        if (gps != null) "gps": gps!.toJson(),
-        if (internet != null) "internet": internet!.toJson(),
-        "location": location.toJson(),
-        "location_frequency_in_milliseconds": locationFrequencyInMilliseconds,
-        "ride_id": rideId,
-        "timestamp": timestamp,
-        "trip_status": tripStatus,
-      };
+      if (battery != null) "battery": battery!.toJson(),
+      if (device != null) "device": device!.toJson(),
+      "failed_attempts_count": failedAttemptsCount,
+      if (gps != null) "gps": gps!.toJson(),
+      if (internet != null) "internet": internet!.toJson(),
+      "location": location.toJson(),
+      "location_frequency_in_milliseconds": locationFrequencyInMilliseconds,
+      "ride_id": rideId,
+      "timestamp": timestamp,
+      "trip_status": tripStatus,
+    };
   }
 }
 
@@ -62,25 +61,17 @@ class BatteryData {
   final bool isCharging;
   final int level;
 
-  BatteryData({
-    required this.isCharging,
-    required this.level,
-  });
+  BatteryData({required this.isCharging, required this.level});
 
-  Map<String, dynamic> toJson() => {
-        "is_charging": isCharging,
-        "level": level,
-      };
+  Map<String, dynamic> toJson() => {"is_charging": isCharging, "level": level};
 }
 
 class DeviceData {
-  final int androidVersion; 
+  final int androidVersion;
 
   DeviceData({required this.androidVersion});
 
-  Map<String, dynamic> toJson() => {
-        "android_version": androidVersion,
-      };
+  Map<String, dynamic> toJson() => {"android_version": androidVersion};
 }
 
 class GpsData {
@@ -101,28 +92,25 @@ class GpsData {
   });
 
   Map<String, dynamic> toJson() => {
-        "confirmed_real_location_count": confirmedRealLocationCount,
-        "is_enabled": isEnabled,
-        "location_callback_fired_count": locationCallbackFiredCount,
-        "mock_location_count": mockLocationCount,
-        "permission": permission,
-        "real_location_sent_count": realLocationSentCount,
-      };
+    "confirmed_real_location_count": confirmedRealLocationCount,
+    "is_enabled": isEnabled,
+    "location_callback_fired_count": locationCallbackFiredCount,
+    "mock_location_count": mockLocationCount,
+    "permission": permission,
+    "real_location_sent_count": realLocationSentCount,
+  };
 }
 
 class InternetData {
   final String connectionType;
   final bool isConnected;
 
-  InternetData({
-    required this.connectionType,
-    required this.isConnected,
-  });
+  InternetData({required this.connectionType, required this.isConnected});
 
   Map<String, dynamic> toJson() => {
-        "connection_type": connectionType,
-        "is_connected": isConnected,
-      };
+    "connection_type": connectionType,
+    "is_connected": isConnected,
+  };
 }
 
 class LocationData {
@@ -160,19 +148,19 @@ class LocationData {
   });
 
   Map<String, dynamic> toJson() => {
-        "accuracy": accuracy,
-        "altitude": altitude,
-        "android_id": androidId,
-        "bearing": bearing,
-        "bearing_accuracy_degrees": bearingAccuracyDegrees,
-        "elapsed_realtime_nanos": elapsedRealtimeNanos,
-        "lat": lat,
-        "lng": lng,
-        "run_counter": runCounter,
-        "sequence": sequence,
-        "speed": speed,
-        "speed_accuracy_meters_per_second": speedAccuracyMetersPerSecond,
-        "time_utc": timeUtc,
-        "vertical_accuracy_meters": verticalAccuracyMeters,
-      };
+    "accuracy": accuracy,
+    "altitude": altitude,
+    "android_id": androidId,
+    "bearing": bearing,
+    "bearing_accuracy_degrees": bearingAccuracyDegrees,
+    "elapsed_realtime_nanos": elapsedRealtimeNanos,
+    "lat": lat,
+    "lng": lng,
+    "run_counter": runCounter,
+    "sequence": sequence,
+    "speed": speed,
+    "speed_accuracy_meters_per_second": speedAccuracyMetersPerSecond,
+    "time_utc": timeUtc,
+    "vertical_accuracy_meters": verticalAccuracyMeters,
+  };
 }
