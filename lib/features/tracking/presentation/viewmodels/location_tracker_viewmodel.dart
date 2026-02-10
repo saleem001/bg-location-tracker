@@ -1,43 +1,45 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import '../providers/tracking_providers.dart';
 import '../states/location_state.dart';
 import '../../domain/entities/tracking_event.dart';
+import '../../domain/entities/location_event.dart';
+import '../../data/datasources/location_service_manager.dart';
+import '../../data/datasources/socket_sync_service.dart';
+import '../../data/datasources/location_service_config.dart';
 import '../../../../common/utils/location_utils.dart';
 
 class LocationTrackerViewModel extends Notifier<LocationState> {
   @override
   LocationState build() {
-    // Listen to location stream via Provider
-    ref.listen(locationStreamProvider, (previous, next) {
-      if (next.hasValue) {
-        _handleLocation(next.value!);
-      }
-    });
+    // Ensure Sync Service is active
+    ref.read(socketSyncServiceProvider);
 
-    // Listen to geofence alerts via Provider
-    ref.listen(stationAlertStreamProvider, (previous, next) {
+    // Listen to the unified event stream from the aggregator
+    ref.listen(locationEventStreamProvider, (previous, next) {
       if (next.hasValue) {
-        _handleGeofence(next.value!, "ENTER");
+        _handleUnifiedEvent(next.value!);
       }
     });
 
     return LocationState.initial();
   }
-  
-  // Helper to get the manager
-  get _manager => ref.read(backgroundLocationServiceManagerProvider);
 
+  // Helper to get providers
+  BackgroundLocationServiceManager get _manager => ref.read(backgroundLocationServiceManagerProvider);
+  SocketSyncService get _syncService => ref.read(socketSyncServiceProvider);
 
-  void _handleLocation(bg.Location loc) {
-    final trackingEvent = LocationTrackingEvent(
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-      speed: loc.coords.speed,
-      odometer: loc.odometer,
-      timestamp: DateTime.parse(loc.timestamp),
-    );
+  void _handleUnifiedEvent(LocationEvent event) {
+    switch (event) {
+      case LocationUpdated(:final location, :final isMoving):
+        _processLocation(location, isMoving);
+      case MotionChanged(:final motion):
+        _processLocation(motion.location, motion.isMoving);
+      case GeofenceTriggered(:final geofence):
+        _handleGeofence(geofence.identifier, geofence.action.name.toUpperCase());
+    }
+  }
 
+  void _processLocation(LocationTrackingEvent trackingEvent, bool isMoving) {
     final speed = LocationUtils.msToKmh(trackingEvent.speed);
     TripState? updatedTrip = state.activeTrip;
 
@@ -58,14 +60,15 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     state = state.copyWith(
       currentLocation: trackingEvent,
       speedKmh: speed,
-      isMoving: loc.isMoving,
-      isStationary: !loc.isMoving,
+      isMoving: isMoving,
+      isStationary: !isMoving,
       locationHistory: [...state.locationHistory, trackingEvent],
       activeTrip: updatedTrip,
     );
   }
 
   void _handleGeofence(String identifier, String action) {
+    // The identifier is the full tripId (e.g., "trip_123:::StationName")
     if (state.activeTrip?.tripId != identifier) return;
 
     state = state.copyWith(
@@ -98,6 +101,12 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         rideId: rideId,
         tripStatus: "ON_TRIP",
       );
+
+      _syncService.updateConfig(LocationServiceConfig(
+        captainId: captainId,
+        rideId: rideId,
+        tripStatus: "ON_TRIP",
+      ));
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
 
@@ -136,6 +145,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       
       // 2. Update captain info to IDLE
       _manager.updateCaptainInfo(tripStatus: "IDLE");
+      _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
       
       // 3. Fully reset the state
       state = state.copyWith(

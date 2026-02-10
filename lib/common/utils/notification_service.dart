@@ -39,7 +39,8 @@ class NotificationService {
   Future<void> showGeofenceAlert(String stationName) async {
     print('[NotificationService] Showing alert for: $stationName');
     // Vibrate
-    if (await Vibration.hasVibrator() ?? false) {
+    final hasVibrator = await Vibration.hasVibrator();
+    if (hasVibrator == true) {
       Vibration.vibrate(duration: 1000); // 1 second vibration
     }
 
