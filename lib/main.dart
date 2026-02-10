@@ -9,11 +9,11 @@ import 'package:toast/toast.dart';
 
 import 'features/tracking/presentation/screens/location_tracker_dashboard.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Local Notifications
-  NotificationService().init();
+  await NotificationService().init();
 
   // Register Headless Task
   bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);
@@ -36,6 +36,7 @@ class _POCAppState extends State<POCApp> {
   }
 
   Future<void> _checkLocationPermission() async {
+    await _requestPermission(Permission.notification);
     await _requestPermission(Permission.location);
     await _requestPermission(Permission.locationAlways);
   }

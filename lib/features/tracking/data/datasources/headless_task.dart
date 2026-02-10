@@ -28,18 +28,25 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
         
         if (geofenceEvent.action == 'ENTER') {
            // 1. Send to server
-           await transport.sendStationEntryAlert(geofenceEvent.identifier);
-           
-           // 2. Notify User 
-           // Extract name from identifier (tripId:::StationName)
-           String displayName = geofenceEvent.identifier;
-           if (displayName.contains(":::")) {
-             displayName = displayName.split(":::").last;
+          String displayName = "you reached to your destination";
+           try {
+             await transport.sendStationEntryAlert(geofenceEvent.identifier);
+
+             // 2. Notify User
+             // Extract name from identifier (tripId:::StationName)
+             displayName = geofenceEvent.identifier;
+             if (displayName.contains(":::")) {
+                          displayName = displayName.split(":::").last;
+                        }
+             final notifications = NotificationService();
+             await notifications.init(requestPermissions: false);
+             await notifications.showGeofenceAlert(displayName);
+           } catch (e) {
+             final notifications = NotificationService();
+             await notifications.init(requestPermissions: false);
+             await notifications.showGeofenceAlert(displayName);
            }
-           
-           final notifications = NotificationService();
-           await notifications.init(); 
-           await notifications.showGeofenceAlert(displayName);
+
         }
         break;
 

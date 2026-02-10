@@ -9,7 +9,7 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  Future<void> init() async {
+  Future<void> init({bool requestPermissions = true}) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -27,9 +27,17 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
     );
+
+    // Request permissions for Android 13+ ONLY if requested and not in headless mode
+    if (requestPermissions) {
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+    }
   }
 
   Future<void> showGeofenceAlert(String stationName) async {
+    print('[NotificationService] Showing alert for: $stationName');
     // Vibrate
     if (await Vibration.hasVibrator() ?? false) {
       Vibration.vibrate(duration: 1000); // 1 second vibration
@@ -37,12 +45,14 @@ class NotificationService {
 
     // Show Notification
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'geofence_channel',
-      'Geofence Alerts',
-      channelDescription: 'Notifications for entering/exiting geofences',
+      'geofence_alerts_channel_v2',
+      'Geofence Arrival Alerts',
+      channelDescription: 'Notifications for entering geofences',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
+      playSound: true,
+      enableVibration: true,
     );
     
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
