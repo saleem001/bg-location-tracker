@@ -14,6 +14,8 @@ class TripState {
   final DateTime? startedAt;
   final DateTime? arrivedAt;
   final DateTime? estimatedArrivalTime;
+  final String? captainId;
+  final String? rideId;
 
   TripState({
     required this.tripId,
@@ -29,6 +31,8 @@ class TripState {
     this.startedAt,
     this.arrivedAt,
     this.estimatedArrivalTime,
+    this.captainId,
+    this.rideId,
   });
 
   factory TripState.newTrip({
@@ -39,6 +43,8 @@ class TripState {
     required double destinationLng,
     required String destinationName,
     double geofenceRadius = 200.0,
+    String? captainId,
+    String? rideId,
   }) => TripState(
     tripId: tripId,
     sourceLat: sourceLat,
@@ -48,6 +54,8 @@ class TripState {
     destinationName: destinationName,
     geofenceRadius: geofenceRadius,
     startedAt: DateTime.now(),
+    captainId: captainId,
+    rideId: rideId,
   );
 
   TripState copyWith({
@@ -57,6 +65,8 @@ class TripState {
     double? geofenceRadius,
     DateTime? arrivedAt,
     DateTime? estimatedArrivalTime,
+    String? captainId,
+    String? rideId,
   }) => TripState(
     tripId: tripId,
     sourceLat: sourceLat,
@@ -64,13 +74,16 @@ class TripState {
     destinationLat: destinationLat,
     destinationLng: destinationLng,
     destinationName: destinationName,
-    distanceRemainingMeters: distanceRemainingMeters ?? this.distanceRemainingMeters,
+    distanceRemainingMeters:
+        distanceRemainingMeters ?? this.distanceRemainingMeters,
     hasArrived: hasArrived ?? this.hasArrived,
     isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
     geofenceRadius: geofenceRadius ?? this.geofenceRadius,
     startedAt: startedAt,
     arrivedAt: arrivedAt ?? this.arrivedAt,
     estimatedArrivalTime: estimatedArrivalTime ?? this.estimatedArrivalTime,
+    captainId: captainId ?? this.captainId,
+    rideId: rideId ?? this.rideId,
   );
 }
 

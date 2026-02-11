@@ -1,4 +1,3 @@
-
 import '../../domain/entities/captain_location_data.dart';
 
 abstract class ITrackingTransport {

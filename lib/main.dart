@@ -16,7 +16,9 @@ Future<void> main() async {
   await NotificationService().init();
 
   // Register Headless Task
-  bg.BackgroundGeolocation.registerHeadlessTask(backgroundGeolocationHeadlessTask);
+  bg.BackgroundGeolocation.registerHeadlessTask(
+    backgroundGeolocationHeadlessTask,
+  );
 
   runApp(const ProviderScope(child: POCApp()));
 }

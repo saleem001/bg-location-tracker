@@ -1,5 +1,5 @@
-
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../presentation/providers/tracking_providers.dart';
@@ -8,10 +8,10 @@ import '../../../../common/utils/notification_service.dart';
 @pragma('vm:entry-point')
 void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
   print('[HeadlessTask] Event received: ${event.name}');
-  
+
   // Create a temporary ProviderContainer to access our ServiceManager
   final container = ProviderContainer();
-  
+
   try {
     final transport = container.read(trackingTransportProvider);
 
@@ -53,8 +53,8 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
       case bg.Event.TERMINATE:
         print('[HeadlessTask] Terminate event');
         break;
-        
-      default: 
+
+      default:
         print('[HeadlessTask] Unhandled event: ${event.name}');
     }
   } catch (e, stack) {

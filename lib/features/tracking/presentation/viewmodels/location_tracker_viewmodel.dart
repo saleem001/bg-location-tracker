@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../providers/tracking_providers.dart';
 import '../states/location_state.dart';
+
+import '../../domain/entities/geofence_event.dart';
 import '../../domain/entities/tracking_event.dart';
 import '../../domain/entities/location_event.dart';
 import '../../data/datasources/location_service_manager.dart';
 import '../../data/datasources/socket_sync_service.dart';
 import '../../data/datasources/location_service_config.dart';
 import '../../../../common/utils/location_utils.dart';
+import '../../presentation/providers/plugin_logs_provider.dart';
 
 class LocationTrackerViewModel extends Notifier<LocationState> {
   @override
@@ -45,8 +49,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     if (updatedTrip != null) {
       final distance = LocationUtils.calculateDistanceMeters(
-        trackingEvent.latitude,
-        trackingEvent.longitude,
+        loc.latitude,
+        loc.longitude,
         updatedTrip.destinationLat,
         updatedTrip.destinationLng,
       );
@@ -58,13 +62,18 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     }
 
     state = state.copyWith(
-      currentLocation: trackingEvent,
+      currentLocation: loc,
       speedKmh: speed,
       isMoving: isMoving,
       isStationary: !isMoving,
       locationHistory: [...state.locationHistory, trackingEvent],
       activeTrip: updatedTrip,
     );
+
+    // Log location
+    ref
+        .watch(pluginLogsProvider.notifier)
+        .logLocation(loc.latitude, loc.longitude, loc.speed, loc.odometer);
   }
 
   void _handleGeofence(String identifier, String action) {
@@ -73,7 +82,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     state = state.copyWith(
       activeTrip: state.activeTrip?.copyWith(
-        isWithinGeofence: action == "ENTER",
+        isWithinGeofence: event.action == GeofenceAction.enter,
       ),
     );
   }
@@ -89,10 +98,17 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     double geofenceRadius = 200.0,
     bool reset = true,
   }) async {
+    if (state.isLoading || state.activeTrip != null) return;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       if (!state.isServiceEnabled) {
-        await _manager.initialize();
+        final config = _buildAdvancedConfig(reset: reset);
+        await _manager
+            .initLocationStream()
+            .initStationGeofenceStream()
+            .initServiceStatusStream()
+            .initMotionStream()
+            .initialize(config);
         state = state.copyWith(isServiceEnabled: true);
       }
 
@@ -118,6 +134,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         destinationLng: destinationLng,
         destinationName: name,
         geofenceRadius: geofenceRadius,
+        captainId: captainId,
+        rideId: rideId,
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
@@ -132,7 +150,12 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       ]);
 
       await _manager.start();
+
+      ref.watch(pluginLogsProvider.notifier).logInfo("Trip started: $tripId");
     } catch (e) {
+      ref
+          .watch(pluginLogsProvider.notifier)
+          .logError("Start Trip Failed", error: e);
       state = state.copyWith(isLoading: false, error: "Start Failed: $e");
     }
   }
@@ -142,7 +165,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     try {
       // 1. Stop the background geolocation service
       await _manager.stop();
-      
+
       // 2. Update captain info to IDLE
       _manager.updateCaptainInfo(tripStatus: "IDLE");
       _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
@@ -156,8 +179,41 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         isStationary: true,
         speedKmh: 0.0,
       );
+
+      ref.watch(pluginLogsProvider.notifier).logInfo("Trip stopped");
     } catch (e) {
+      ref
+          .watch(pluginLogsProvider.notifier)
+          .logError("Stop Trip Failed", error: e);
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }
+  }
+
+  LocationManagerConfig _buildAdvancedConfig({required bool reset}) {
+    return LocationManagerConfigBuilder()
+        .setTracking(
+          TrackingPolicyBuilder()
+              .setAccuracy(5)
+              .setDistanceFilter(5)
+              .setMovementThreshold(5)
+              .build(),
+        )
+        .setLifecycle(
+          LifecyclePolicyBuilder()
+              .setStopOnTerminate(false)
+              .setStartOnBoot(true)
+              .build(),
+        )
+        .setNotification(
+          NotificationPolicyBuilder()
+              .setTitle("Location Tracking Active")
+              .setMessage("Updating position, speed, and odometer")
+              .build(),
+        )
+        .setLogging(
+          LoggingPolicyBuilder().setLogLevel(2).setDebug(true).build(),
+        )
+        .setReset(reset)
+        .build();
   }
 }
