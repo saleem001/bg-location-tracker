@@ -16,17 +16,43 @@ class LocationDashboard extends ConsumerStatefulWidget {
   ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
 }
 
+class StationControllers {
+  final TextEditingController name;
+  final TextEditingController lat;
+  final TextEditingController lng;
+
+  StationControllers({String? initialName, String? initialLat, String? initialLng})
+      : name = TextEditingController(text: initialName ?? ""),
+        lat = TextEditingController(text: initialLat ?? ""),
+        lng = TextEditingController(text: initialLng ?? "");
+
+  void dispose() {
+    name.dispose();
+    lat.dispose();
+    lng.dispose();
+  }
+}
+
 class _LocationDashboardState extends ConsumerState<LocationDashboard> {
-  final TextEditingController _destLatController = TextEditingController(
-    text: "34.743282",
-  );
-  final TextEditingController _destLngController = TextEditingController(
-    text: "72.358245",
-  );
-  final TextEditingController _destNameController = TextEditingController(
-    text: "Station A",
-  );
+  final List<StationControllers> _stations = [
+    StationControllers(
+      initialName: "Stop & Shop",
+      initialLat: "34.742949",
+      initialLng: "72.359715",
+    )
+  ];
+  //saidu chok 34.749598, 72.357232
+  //DHQ hospital 34.758003, 72.357872
+  //grassy ground 34.765879, 72.359467
   final MapController _mapController = MapController();
+
+  @override
+  void dispose() {
+    for (var s in _stations) {
+      s.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +79,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
           children: [
             _buildStatusCard(state),
             const SizedBox(height: 16),
-            _buildTripInputs(),
+            _buildTripInputs(state),
             const SizedBox(height: 16),
             _buildActionButtons(state, viewModel),
             const SizedBox(height: 16),
@@ -111,40 +137,72 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     );
   }
 
-  Widget _buildTripInputs() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text(
-              "Trip Destination",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextField(
-              controller: _destNameController,
-              decoration: const InputDecoration(labelText: "Name"),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _destLatController,
-                    decoration: const InputDecoration(labelText: "Lat"),
+  Widget _buildTripInputs(LocationState state) {
+    return Column(
+      children: [
+        ..._stations.asMap().entries.map((entry) {
+          final index = entry.key;
+          final controllers = entry.value;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Station ${index + 1}",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      if (index > 0 && state.activeTrip == null)
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () => setState(() => _stations.removeAt(index)),
+                        ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _destLngController,
-                    decoration: const InputDecoration(labelText: "Lng"),
+                  TextField(
+                    controller: controllers.name,
+                    enabled: state.activeTrip == null,
+                    decoration: const InputDecoration(labelText: "Station Name"),
                   ),
-                ),
-              ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controllers.lat,
+                          enabled: state.activeTrip == null,
+                          decoration: const InputDecoration(labelText: "Lat"),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: controllers.lng,
+                          enabled: state.activeTrip == null,
+                          decoration: const InputDecoration(labelText: "Lng"),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          );
+        }),
+        if (state.activeTrip == null)
+          Center(
+            child: IconButton(
+              icon: const Icon(Icons.add_circle, color: Colors.green, size: 40),
+              onPressed: () => setState(() => _stations.add(StationControllers())),
+            ),
+          ),
+      ],
     );
   }
 
@@ -160,8 +218,18 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.green.withOpacity(0.5),
             ),
-            child: const Text("Start Trip"),
+            child: state.isLoading && state.activeTrip == null
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text("Start Trip"),
           ),
         ),
         const SizedBox(width: 8),
@@ -174,8 +242,18 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.red.withOpacity(0.5),
             ),
-            child: const Text("Stop Trip"),
+            child: state.isLoading && state.activeTrip != null
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text("Stop Trip"),
           ),
         ),
       ],
@@ -185,98 +263,97 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   Widget _buildTripInfo(LocationState state) {
     if (state.activeTrip == null) return const SizedBox();
     final trip = state.activeTrip!;
-    final bool isArrived = trip.isWithinGeofence || trip.hasArrived;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: isArrived ? Colors.green.shade900 : Colors.blueGrey.shade900,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(
-                  isArrived ? Icons.check_circle : Icons.navigation,
-                  color: Colors.cyan,
-                  size: 28,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        trip.destinationName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
+    // Find if any station is currently arrived at
+    final arrivedStations = trip.geofences.where((g) => g.isInside).toList();
+
+    return Column(
+      children: [
+        ...trip.geofences.map((g) {
+          final distanceStr = g.distanceMeters < 1000
+              ? "${g.distanceMeters.toStringAsFixed(0)}m"
+              : "${(g.distanceMeters / 1000).toStringAsFixed(2)}km";
+
+          return Card(
+            elevation: 4,
+            margin: const EdgeInsets.only(bottom: 8),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: g.isInside ? Colors.green.shade900 : Colors.blueGrey.shade900,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(
+                    g.isInside ? Icons.check_circle : Icons.location_on,
+                    color: g.isInside ? Colors.greenAccent : Colors.cyan,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      g.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (g.status != GeofenceStatus.none)
+                        Text(
+                          g.status == GeofenceStatus.arrived
+                              ? "Arrived"
+                              : "Depart",
+                          style: TextStyle(
+                            color: g.status == GeofenceStatus.arrived
+                                ? Colors.greenAccent
+                                : Colors.white.withOpacity(0.5),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       Text(
-                        "Destination Station",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 14,
+                        distanceStr,
+                        style: const TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "${trip.distanceRemainingMeters.toStringAsFixed(0)}m",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.cyanAccent,
-                    ),
+                ],
+              ),
+            ),
+          );
+        }),
+        if (arrivedStations.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.greenAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.stars, color: Colors.greenAccent),
+                const SizedBox(width: 8),
+                Text(
+                  "ARRIVED AT: ${arrivedStations.last.name}",
+                  style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            if (isArrived) ...[
-              const Divider(height: 24, color: Colors.white24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.greenAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withOpacity(0.5),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.stars, color: Colors.greenAccent),
-                    SizedBox(width: 8),
-                    Text(
-                      "USER ARRIVED",
-                      style: TextStyle(
-                        color: Colors.greenAccent,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -295,23 +372,44 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       mapController: _mapController,
       options: MapOptions(initialCenter: currentLatLng, initialZoom: 15),
       children: [
-        TileLayer(urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", userAgentPackageName: 'com.example.track_me_test_project',),
-        if (state.activeTrip != null)
+        TileLayer(
+          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          userAgentPackageName: 'com.example.track_me_test_project',
+        ),
+        if (state.activeTrip != null) ...[
           CircleLayer(
-            circles: [
-              CircleMarker(
-                point: LatLng(
-                  state.activeTrip!.destinationLat,
-                  state.activeTrip!.destinationLng,
-                ),
-                radius: state.activeTrip!.geofenceRadius,
-                useRadiusInMeter: true,
-                color: Colors.cyan.withOpacity(0.2),
-                borderColor: Colors.cyan,
-                borderStrokeWidth: 2,
-              ),
-            ],
+            circles: state.activeTrip!.geofences
+                .map(
+                  (g) => CircleMarker(
+                    point: LatLng(g.latitude, g.longitude),
+                    radius: g.radius,
+                    useRadiusInMeter: true,
+                    color: g.isInside
+                        ? Colors.green.withOpacity(0.2)
+                        : Colors.cyan.withOpacity(0.2),
+                    borderColor: g.isInside ? Colors.green : Colors.cyan,
+                    borderStrokeWidth: 2,
+                  ),
+                )
+                .toList(),
           ),
+          MarkerLayer(
+            markers: state.activeTrip!.geofences
+                .map(
+                  (g) => Marker(
+                    point: LatLng(g.latitude, g.longitude),
+                    width: 40,
+                    height: 40,
+                    child: Icon(
+                      Icons.location_on,
+                      color: g.isInside ? Colors.greenAccent : Colors.redAccent,
+                      size: 40,
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
         MarkerLayer(
           markers: [
             Marker(
@@ -320,20 +418,6 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
               height: 40,
               child: const Icon(Icons.navigation, color: Colors.cyan, size: 40),
             ),
-            if (state.activeTrip != null)
-              Marker(
-                point: LatLng(
-                  state.activeTrip!.destinationLat,
-                  state.activeTrip!.destinationLng,
-                ),
-                width: 40,
-                height: 40,
-                child: const Icon(
-                  Icons.location_on,
-                  color: Colors.redAccent,
-                  size: 40,
-                ),
-              ),
           ],
         ),
       ],
@@ -341,22 +425,54 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   }
 
   Future<void> _handleStartTrip(dynamic viewModel) async {
+    // Validation
+    for (int i = 0; i < _stations.length; i++) {
+      final s = _stations[i];
+      if (s.name.text.trim().isEmpty ||
+          s.lat.text.trim().isEmpty ||
+          s.lng.text.trim().isEmpty) {
+        Toast.show(
+          "Please fill all fields for Station ${i + 1}",
+          duration: Toast.lengthLong,
+        );
+        return;
+      }
+
+      if (double.tryParse(s.lat.text) == null ||
+          double.tryParse(s.lng.text) == null) {
+        Toast.show(
+          "Invalid Lat/Lng for Station ${i + 1}",
+          duration: Toast.lengthLong,
+        );
+        return;
+      }
+    }
+
     final status = await Permission.locationAlways.request();
     if (status.isGranted) {
-      // Get real-time current position
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
+      final List<Map<String, dynamic>> stations = _stations.map((s) {
+        return {
+          'name': s.name.text.trim(),
+          'lat': double.parse(s.lat.text.replaceAll(' ', '')),
+          'lng': double.parse(s.lng.text.replaceAll(' ', '')),
+          'radius': 200.0,
+        };
+      }).toList();
+
       await viewModel.startTrip(
-        geofenceRadius: 380.0,
         sourceLat: position.latitude,
         sourceLng: position.longitude,
-        destinationLat: double.parse(_destLatController.text),
-        destinationLng: double.parse(_destLngController.text),
-        name: _destNameController.text,
+        stations: stations,
+      );
+
+      // Move camera to user current location
+      _mapController.move(
+        LatLng(position.latitude, position.longitude),
+        15.0,
       );
     } else {
       Toast.show("Location Permission Required", duration: Toast.lengthLong);

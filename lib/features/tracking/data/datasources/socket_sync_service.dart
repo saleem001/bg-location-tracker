@@ -40,13 +40,7 @@ class SocketSyncService {
     final deviceName = Platform.isAndroid ? "Android" : "iOS";
 
     final payload = LocationPayloadBuilder()
-        .setLocationRaw(
-          lat: event.location.latitude,
-          lng: event.location.longitude,
-          speed: event.location.speed,
-          odometer: event.location.odometer,
-          timestamp: event.location.timestamp,
-        )
+        .setLocationFromEvent(event.location)
         .setCaptainInfo(
           captainId: _config.captainId ?? "UNKNOWN",
           rideId: _config.rideId ?? "IDLE",

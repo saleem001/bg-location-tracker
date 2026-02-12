@@ -16,13 +16,21 @@ class GeofenceNotificationHandler {
 
   void _handleEvent(LocationEvent event) async {
     if (event is GeofenceTriggered) {
-      if (event.geofence.action == GeofenceAction.enter) {
-        String displayName = event.geofence.identifier;
-        if (displayName.contains(":::")) {
-          displayName = displayName.split(":::").last;
-        }
+      String displayName = event.geofence.identifier;
+      if (displayName.contains(":::")) {
+        displayName = displayName.split(":::").last;
+      }
 
-        await _notificationService.showGeofenceAlert(displayName);
+      if (event.geofence.action == GeofenceAction.enter) {
+        await _notificationService.showGeofenceAlert(
+          displayName,
+          event.geofence.identifier.hashCode,
+        );
+      } else if (event.geofence.action == GeofenceAction.exit) {
+        await _notificationService.showGeofenceExitAlert(
+          displayName,
+          event.geofence.identifier.hashCode,
+        );
       }
     }
   }

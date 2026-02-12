@@ -7,7 +7,6 @@ import 'package:track_me/features/tracking/data/datasources/location_plugin_conf
 import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
-import '../../domain/entities/location_event.dart';
 import '../../domain/entities/location_feature.dart';
 
 /// Manages the background location plugin and exposes mapped domain streams.
@@ -165,11 +164,19 @@ class BackgroundLocationServiceManager {
   // ---------------------------------------------------------------------------
 
   Future<void> start() async {
+    final state = await bg.BackgroundGeolocation.state;
+    if (state.enabled) {
+      print('[LocationServiceManager] Plugin already enabled, skipping start()');
+      return;
+    }
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
   }
 
-  Future<void> stop() => bg.BackgroundGeolocation.stop();
+  Future<void> stop() async{
+    await bg.BackgroundGeolocation.changePace(false);
+    await bg.BackgroundGeolocation.stop();
+  }
 
   Future<void> updateConfigs(Map<String, dynamic> extras) async {
     await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
@@ -185,7 +192,7 @@ class BackgroundLocationServiceManager {
           latitude: station['lat'],
           longitude: station['lng'],
           notifyOnEntry: true,
-          notifyOnExit: false,
+          notifyOnExit: true,
         ),
       );
     }

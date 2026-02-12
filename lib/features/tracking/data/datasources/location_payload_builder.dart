@@ -9,31 +9,11 @@ class LocationPayloadBuilder {
   String? _tripStatus;
   double? _batteryLevel;
   String? _deviceName;
-  double? _lat;
-  double? _lng;
-  double? _speed;
-  double? _odometer;
-  DateTime? _timestamp;
   bool? _isOnline;
   String? _connectionType;
 
   LocationPayloadBuilder setLocationFromEvent(LocationTrackingEvent location) {
     _location = location;
-    return this;
-  }
-
-  LocationPayloadBuilder setLocationRaw({
-    required double lat,
-    required double lng,
-    required double speed,
-    required double odometer,
-    required DateTime timestamp,
-  }) {
-    _lat = lat;
-    _lng = lng;
-    _speed = speed;
-    _odometer = odometer;
-    _timestamp = timestamp;
     return this;
   }
 
