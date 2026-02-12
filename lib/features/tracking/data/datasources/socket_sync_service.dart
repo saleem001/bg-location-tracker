@@ -38,7 +38,7 @@ class SocketSyncService {
   Future<void> _sendLocation(LocationUpdated event) async {
     final List<ConnectivityResult> connectivity = await Connectivity().checkConnectivity();
     final deviceName = Platform.isAndroid ? "Android" : "iOS";
-    
+
     final payload = LocationPayloadBuilder()
         .setLocationRaw(
           lat: event.location.latitude,
@@ -54,7 +54,7 @@ class SocketSyncService {
         )
         .setDeviceInfo(
           deviceName: deviceName,
-          batteryLevel: 100.0,
+          batteryLevel: event.location.batteryLevel,
         )
         .setNetworkInfo(
           isOnline: !connectivity.contains(ConnectivityResult.none),

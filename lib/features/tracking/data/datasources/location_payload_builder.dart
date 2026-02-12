@@ -8,6 +8,12 @@ class LocationPayloadBuilder {
   String? _rideId;
   String? _tripStatus;
   double? _batteryLevel;
+  String? _deviceName;
+  double? _lat;
+  double? _lng;
+  double? _speed;
+  double? _odometer;
+  DateTime? _timestamp;
   bool? _isOnline;
   String? _connectionType;
 
@@ -42,7 +48,9 @@ class LocationPayloadBuilder {
     return this;
   }
 
-  LocationPayloadBuilder setDeviceInfo({required double batteryLevel}) {
+  LocationPayloadBuilder setDeviceInfo({required String deviceName,
+    required double batteryLevel,}) {
+    _deviceName = deviceName;
     _batteryLevel = batteryLevel;
     return this;
   }
@@ -57,7 +65,7 @@ class LocationPayloadBuilder {
   }
 
   CaptainLocationData build() {
-    if (_location == null && _lat == null) throw Exception("Location is required");
+    if (_location == null) throw Exception("Location is required");
 
     final locationData = LocationData(
       accuracy: _location!.accuracy.toString(),

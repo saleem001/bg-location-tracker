@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:track_me/features/tracking/domain/services/location_update_service.dart';
 import '../../domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import '../../domain/services/geofence_notification_handler.dart';
 import '../states/location_state.dart';
 import '../viewmodels/location_tracker_viewmodel.dart';
 import '../../data/datasources/location_service_manager.dart';
@@ -19,7 +21,9 @@ final trackingTransportProvider = Provider<ITrackingTransport>((ref) {
 // Service Manager Provider (Concrete Implementation)
 final backgroundLocationServiceManagerProvider =
     Provider<BackgroundLocationServiceManager>((ref) {
-      return BackgroundLocationServiceManager();
+      final manager = BackgroundLocationServiceManager();
+      ref.onDispose(() => manager.dispose());
+      return manager;
     });
 
 // Location Update Service Provider (Bridge: Manager -> Transport)
@@ -29,11 +33,28 @@ final locationUpdateServiceProvider = Provider<LocationUpdateService>((ref) {
 });
 
 // Aggregator Provider
-final locationEventAggregatorProvider = Provider<LocationEventAggregator>((ref) {
-  final aggregator = LocationEventAggregator();
+final locationEventAggregatorProvider = Provider<LocationEventAggregator>((
+  ref,
+) {
+  final manager = ref.watch(backgroundLocationServiceManagerProvider);
+
+  final aggregator = LocationEventAggregator(manager);
+
   ref.onDispose(() => aggregator.dispose());
+
   return aggregator;
 });
+
+final geofenceNotificationHandlerProvider =
+    Provider<GeofenceNotificationHandler>((ref) {
+      final aggregator = ref.watch(locationEventAggregatorProvider);
+
+      final handler = GeofenceNotificationHandler(aggregator.eventStream);
+
+      ref.onDispose(() => handler.dispose());
+
+      return handler;
+    });
 
 // Unified Event Stream Provider
 final locationEventStreamProvider = StreamProvider<LocationEvent>((ref) {
@@ -46,12 +67,12 @@ final socketSyncServiceProvider = Provider<SocketSyncService>((ref) {
   final transport = ref.watch(trackingTransportProvider);
   final aggregator = ref.watch(locationEventAggregatorProvider);
   final service = SocketSyncService(transport);
-  
+
   // Listen to the aggregated stream directly from the aggregator
   service.startListening(aggregator.eventStream);
-  
+
   ref.onDispose(() => service.stopListening());
-  
+
   return service;
 });
 

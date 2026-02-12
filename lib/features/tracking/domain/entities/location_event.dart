@@ -1,33 +1,33 @@
+import 'location_service_status.dart';
 import 'tracking_event.dart';
 import 'geofence_event.dart';
 
-sealed class LocationEvent {
-  final DateTime timestamp;
-  LocationEvent(this.timestamp);
-}
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'geofence_event.dart';
+import 'location_service_status.dart';
 
-class LocationUpdated extends LocationEvent {
-  final LocationTrackingEvent location;
-  final bool isMoving;
+part 'location_event.freezed.dart';
 
-  LocationUpdated({
-    required this.location,
-    required this.isMoving,
-  }) : super(location.timestamp);
-}
+@freezed
+class LocationEvent with _$LocationEvent {
+  const factory LocationEvent.locationUpdated({
+    required LocationTrackingEvent location,
+    required bool isMoving,
+  }) = LocationUpdated;
 
-class GeofenceTriggered extends LocationEvent {
-  final GeofenceEvent geofence;
+  const factory LocationEvent.motionChanged({
+    required MotionChangeEvent motion,
+  }) = MotionChanged;
 
-  GeofenceTriggered({
-    required this.geofence,
-  }) : super(DateTime.now());
-}
+  const factory LocationEvent.geofenceTriggered({
+    required GeofenceEvent geofence,
+  }) = GeofenceTriggered;
 
-class MotionChanged extends LocationEvent {
-  final MotionChangeEvent motion;
+  const factory LocationEvent.serviceStatusChanged({
+    required LocationServiceStatus status,
+  }) = ServiceStatusChanged;
 
-  MotionChanged({
-    required this.motion,
-  }) : super(motion.location.timestamp);
+  const factory LocationEvent.serviceEnabledChanged({
+    required bool isEnabled,
+  }) = ServiceEnabledChanged;
 }

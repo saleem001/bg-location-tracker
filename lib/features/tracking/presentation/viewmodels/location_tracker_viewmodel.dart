@@ -17,6 +17,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   LocationState build() {
     // Ensure Sync Service is active
     ref.read(socketSyncServiceProvider);
+    ref.read(geofenceNotificationHandlerProvider);
 
     // Listen to the unified event stream from the aggregator
     ref.listen(locationEventStreamProvider, (previous, next) {
@@ -29,7 +30,9 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }
 
   // Helper to get providers
-  BackgroundLocationServiceManager get _manager => ref.read(backgroundLocationServiceManagerProvider);
+  BackgroundLocationServiceManager get _manager =>
+      ref.read(backgroundLocationServiceManagerProvider);
+
   SocketSyncService get _syncService => ref.read(socketSyncServiceProvider);
 
   void _handleUnifiedEvent(LocationEvent event) {
@@ -39,7 +42,16 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       case MotionChanged(:final motion):
         _processLocation(motion.location, motion.isMoving);
       case GeofenceTriggered(:final geofence):
-        _handleGeofence(geofence.identifier, geofence.action.name.toUpperCase());
+        _handleGeofence(
+          geofence.identifier,
+          geofence.action,
+        );
+      case ServiceStatusChanged():
+        {
+          // TODO: Handle this case.
+        }
+      case ServiceEnabledChanged(:final isEnabled):
+        _handleServiceEnableChange(isEnabled);
     }
   }
 
@@ -49,8 +61,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     if (updatedTrip != null) {
       final distance = LocationUtils.calculateDistanceMeters(
-        loc.latitude,
-        loc.longitude,
+        trackingEvent.latitude,
+        trackingEvent.longitude,
         updatedTrip.destinationLat,
         updatedTrip.destinationLng,
       );
@@ -62,7 +74,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     }
 
     state = state.copyWith(
-      currentLocation: loc,
+      currentLocation: trackingEvent,
       speedKmh: speed,
       isMoving: isMoving,
       isStationary: !isMoving,
@@ -73,18 +85,27 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     // Log location
     ref
         .watch(pluginLogsProvider.notifier)
-        .logLocation(loc.latitude, loc.longitude, loc.speed, loc.odometer);
+        .logLocation(
+          trackingEvent.latitude,
+          trackingEvent.longitude,
+          trackingEvent.speed,
+          trackingEvent.odometer,
+        );
   }
 
-  void _handleGeofence(String identifier, String action) {
+  void _handleGeofence(String identifier, GeofenceAction action) {
     // The identifier is the full tripId (e.g., "trip_123:::StationName")
     if (state.activeTrip?.tripId != identifier) return;
 
     state = state.copyWith(
       activeTrip: state.activeTrip?.copyWith(
-        isWithinGeofence: event.action == GeofenceAction.enter,
+        isWithinGeofence: action == GeofenceAction.enter,
       ),
     );
+  }
+
+  void _handleServiceEnableChange(bool isServiceEnabled) {
+    state = state.copyWith(isServiceEnabled: isServiceEnabled);
   }
 
   Future<void> startTrip({
@@ -104,25 +125,22 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       if (!state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
-            .initLocationStream()
-            .initStationGeofenceStream()
-            .initServiceStatusStream()
-            .initMotionStream()
-            .initialize(config);
+            .onLocation()
+            .onAutoArrival()
+            .onServiceStatusChange()
+            .onMotionChange()
+            .initialize(config)
+            .then((manager) => manager.start());
         state = state.copyWith(isServiceEnabled: true);
       }
 
-      _manager.updateCaptainInfo(
-        captainId: captainId,
-        rideId: rideId,
-        tripStatus: "ON_TRIP",
+      _syncService.updateConfig(
+        LocationServiceConfig(
+          captainId: captainId,
+          rideId: rideId,
+          tripStatus: "ON_TRIP",
+        ),
       );
-
-      _syncService.updateConfig(LocationServiceConfig(
-        captainId: captainId,
-        rideId: rideId,
-        tripStatus: "ON_TRIP",
-      ));
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
 
@@ -167,13 +185,13 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       await _manager.stop();
 
       // 2. Update captain info to IDLE
-      _manager.updateCaptainInfo(tripStatus: "IDLE");
       _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
-      
+
       // 3. Fully reset the state
       state = state.copyWith(
         isLoading: false,
-        clearActiveTrip: true, // Use the new flag to properly clear the trip
+        clearActiveTrip: true,
+        // Use the new flag to properly clear the trip
         isServiceEnabled: false,
         isMoving: false,
         isStationary: true,

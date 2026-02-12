@@ -1,10 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:track_me/features/tracking/data/datasources/i_tracking_transport.dart';
 import 'package:track_me/features/tracking/data/datasources/location_payload_builder.dart';
-import 'package:track_me/features/tracking/presentation/providers/tracking_providers.dart';
+import 'package:track_me/features/tracking/domain/entities/location_event.dart';
+import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:track_me/features/tracking/presentation/providers/plugin_logs_provider.dart';
+import 'package:track_me/features/tracking/presentation/providers/tracking_providers.dart';
 
 /// Service responsible for listening to location updates and sending them to the transport layer.
 /// This acts as the bridge between the BackgroundLocationServiceManager (Provider) and the Transport (Socket).
@@ -18,10 +19,21 @@ class LocationUpdateService {
 
   void _init() {
     // Listen to location stream
-    _ref.listen(locationStreamProvider, (previous, next) {
-      if (next.hasValue) {
-        _handleLocationUpdate(next.value!);
-      }
+    _ref.listen(locationEventStreamProvider, (previous, next) {
+      next.whenData((event) {
+        switch(event){
+          case LocationUpdated(:final location, :final isMoving):
+            _handleLocationUpdate(location);
+          case GeofenceTriggered():
+            // TODO: Handle this case.
+          case MotionChanged():
+            // TODO: Handle this case.
+          case ServiceStatusChanged():
+            // TODO: Handle this case.
+          case ServiceEnabledChanged():
+            // TODO: Handle this case.
+        }
+      });
     });
 
     // Listen to motion stream?
@@ -43,7 +55,7 @@ class LocationUpdateService {
     // connectivity_plus 6.0 returns List<ConnectivityResult>, older returns single.
     // Assuming compatible version or single result for simplicity, or using toString().
     final connectionType = connectivityResult.toString();
-    final isOnline = connectivityResult != ConnectivityResult.none;
+    final isOnline = !connectivityResult.contains(ConnectivityResult.none);
 
     try {
       final payload = LocationPayloadBuilder()
@@ -53,7 +65,7 @@ class LocationUpdateService {
             rideId: rideId,
             tripStatus: tripStatus,
           )
-          .setDeviceInfo(batteryLevel: location.batteryLevel)
+          .setDeviceInfo(deviceName:"Android",batteryLevel: location.batteryLevel)
           .setNetworkInfo(isOnline: isOnline, connectionType: connectionType)
           .build();
 

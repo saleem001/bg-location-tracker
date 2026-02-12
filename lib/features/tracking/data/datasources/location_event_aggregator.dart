@@ -1,59 +1,70 @@
 import 'dart:async';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import '../../domain/entities/location_event.dart';
+import '../../domain/entities/location_feature.dart';
 import '../../domain/entities/tracking_event.dart';
 import '../../domain/entities/geofence_event.dart';
-import '../../../../common/utils/notification_service.dart';
+import 'location_service_manager.dart';
 
 class LocationEventAggregator {
-  final StreamController<LocationEvent> _eventController = StreamController<LocationEvent>.broadcast();
+  final BackgroundLocationServiceManager _manager;
+
+  final StreamController<LocationEvent> _eventController =
+      StreamController<LocationEvent>.broadcast();
+
+  late final StreamSubscription _locationSub;
+  late final StreamSubscription _motionSub;
+  late final StreamSubscription _geofenceSub;
+  late final StreamSubscription _statusSub;
+  late final StreamSubscription _enabledSub;
 
   Stream<LocationEvent> get eventStream => _eventController.stream;
 
-  LocationEventAggregator() {
-    _initListeners();
+  LocationEventAggregator(this._manager) {
+    _attach();
   }
 
-  void _initListeners() {
-    // 1. Location Updates
-    bg.BackgroundGeolocation.onLocation((bg.Location location) {
-      final trackingEvent = LocationMapper().map(location);
-      _eventController.add(LocationUpdated(
-        location: trackingEvent,
-        isMoving: location.isMoving,
-      ));
+  void _attach() {
+    _locationSub = _manager.locationStream.listen((location) {
+      if (_manager.isFeatureEnabled(LocationFeature.location)) {
+        _eventController.add(
+          LocationUpdated(location: location, isMoving: location.isMoving),
+        );
+      }
     });
 
-    // 2. Motion Change
-    bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
-      final motionEvent = MotionChangeEventMapper().map(location);
-      _eventController.add(MotionChanged(
-        motion: motionEvent,
-      ));
+    _motionSub = _manager.motionStream.listen((motion) {
+      if (_manager.isFeatureEnabled(LocationFeature.motion)) {
+        _eventController.add(MotionChanged(motion: motion));
+      }
     });
 
-    // 3. Geofence Events
-    bg.BackgroundGeolocation.onGeofence((bg.GeofenceEvent event) async {
-      final geofenceEvent = GeofenceEventMapper().map(event);
-      _eventController.add(GeofenceTriggered(
-        geofence: geofenceEvent,
-      ));
-      
-      // Also handle notification here (since this is the single source of truth)
-      if (event.action == "ENTER") {
-        String displayName = event.identifier;
-        if (displayName.contains(":::")) {
-          displayName = displayName.split(":::").last;
-        }
-        
-        // Import needed at top
-        final notificationService = NotificationService();
-        await notificationService.showGeofenceAlert(displayName);
+    _geofenceSub = _manager.geofenceStream.listen((geofence) {
+      if (_manager.isFeatureEnabled(LocationFeature.geofence)) {
+        _eventController.add(GeofenceTriggered(geofence: geofence));
+      }
+    });
+
+    _statusSub = _manager.statusStream.listen((status) {
+      if (_manager.isFeatureEnabled(LocationFeature.status)) {
+        _eventController.add(ServiceStatusChanged(status: status));
+      }
+    });
+
+    _enabledSub = _manager.enabledStream.listen((enabled) {
+      if (_manager.isFeatureEnabled(LocationFeature.enable)) {
+        _eventController.add(ServiceEnabledChanged(isEnabled: enabled));
       }
     });
   }
 
   void dispose() {
+    _locationSub.cancel();
+    _motionSub.cancel();
+    _geofenceSub.cancel();
+    _statusSub.cancel();
+    _enabledSub.cancel();
     _eventController.close();
   }
 }

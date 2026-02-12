@@ -1,0 +1,1 @@
+enum LocationFeature { location, geofence, status, motion, enable }
