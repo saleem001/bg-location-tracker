@@ -23,7 +23,7 @@ class Station {
     this.isInside = false,
     this.distanceMeters = 0.0,
     this.notifyOnEntry = true, // default notification on entry
-    this.notifyOnExit = false, // default notification on exi
+    this.notifyOnExit = true, // default notification on exi
     this.status = GeofenceStatus.none,
   });
 

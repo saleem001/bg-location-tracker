@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:track_me/common/mapper/location_data_mapper.dart';
+import 'package:track_me/common/mapper/location_config_mapper.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
@@ -14,19 +14,22 @@ import '../../presentation/states/location_state.dart';
 /// Uses a fluent API for configuration and an aggregator for stream access.
 class BackgroundLocationServiceManager {
   //Controller/Granluar streams
-  final StreamController<LocationTrackingEvent> _locationController =
+  LocationManagerConfig _config = LocationManagerConfigBuilder().build();
+  List<Station> stations = [];
+
+  StreamController<LocationTrackingEvent> _locationController =
       StreamController<LocationTrackingEvent>.broadcast();
 
-  final StreamController<MotionChangeEvent> _motionController =
+  StreamController<MotionChangeEvent> _motionController =
       StreamController<MotionChangeEvent>.broadcast();
 
-  final StreamController<GeofenceEvent> _geofenceController =
+  StreamController<GeofenceEvent> _geofenceController =
       StreamController<GeofenceEvent>.broadcast();
 
-  final StreamController<LocationServiceStatus> _statusController =
+  StreamController<LocationServiceStatus> _statusController =
       StreamController<LocationServiceStatus>.broadcast();
 
-  final StreamController<bool> _enabledController =
+  StreamController<bool> _enabledController =
       StreamController<bool>.broadcast();
 
   //public streams for access
@@ -50,7 +53,35 @@ class BackgroundLocationServiceManager {
   // Fluent Initialization & Configuration (Chaining)
   // ---------------------------------------------------------------------------
 
-  BackgroundLocationServiceManager subscribeOnLocation() {
+  void recreateControllersAndAttachListeners() {
+    if (_enabledFeatures.contains(LocationFeature.location) &&
+        _locationController.isClosed) {
+      _locationController = StreamController<LocationTrackingEvent>.broadcast();
+      addOnLocation();
+    }
+    if (_enabledFeatures.contains(LocationFeature.motion) &&
+        _motionController.isClosed) {
+      _motionController = StreamController<MotionChangeEvent>.broadcast();
+      addOnMotionChange();
+    }
+    if (_enabledFeatures.contains(LocationFeature.geofence) &&
+        _geofenceController.isClosed) {
+      _geofenceController = StreamController<GeofenceEvent>.broadcast();
+      addOnGeofence(stations);
+    }
+    if (_enabledFeatures.contains(LocationFeature.status) &&
+        _statusController.isClosed) {
+      _statusController = StreamController<LocationServiceStatus>.broadcast();
+      addOnServiceStatusChange();
+    }
+    if (_enabledFeatures.contains(LocationFeature.enable) &&
+        _enabledController.isClosed) {
+      _enabledController = StreamController<bool>.broadcast();
+      addOnEnableChange();
+    }
+  }
+
+  BackgroundLocationServiceManager addOnLocation() {
     if (_enabledFeatures.add(LocationFeature.location) &&
         !_locationController.isClosed) {
       bg.BackgroundGeolocation.onLocation((loc) {
@@ -65,7 +96,7 @@ class BackgroundLocationServiceManager {
     await _locationController.close();
   }
 
-  BackgroundLocationServiceManager subscribeOnMotionChange() {
+  BackgroundLocationServiceManager addOnMotionChange() {
     if (_enabledFeatures.add(LocationFeature.motion) &&
         !_motionController.isClosed) {
       bg.BackgroundGeolocation.onMotionChange((event) {
@@ -80,9 +111,7 @@ class BackgroundLocationServiceManager {
     _motionController.close();
   }
 
-  BackgroundLocationServiceManager subscribeOnAutoArrival(
-    List<Station> stations,
-  ) {
+  BackgroundLocationServiceManager addOnGeofence(List<Station> stations) {
     if (_enabledFeatures.add(LocationFeature.geofence) &&
         !_geofenceController.isClosed) {
       setStationGeofences(stations);
@@ -93,12 +122,12 @@ class BackgroundLocationServiceManager {
     return this;
   }
 
-  Future<void> removeOnAutoArrival() async {
+  Future<void> removeOnGeofence() async {
     _enabledFeatures.remove(LocationFeature.geofence);
     _geofenceController.close();
   }
 
-  BackgroundLocationServiceManager subscribeOnServiceStatusChange() {
+  BackgroundLocationServiceManager addOnServiceStatusChange() {
     if (_enabledFeatures.add(LocationFeature.status) &&
         !_statusController.isClosed) {
       bg.BackgroundGeolocation.onProviderChange((event) {
@@ -113,7 +142,7 @@ class BackgroundLocationServiceManager {
     _statusController.close();
   }
 
-  BackgroundLocationServiceManager subscribeOnEnableChange() {
+  BackgroundLocationServiceManager addOnEnableChange() {
     if (_enabledFeatures.add(LocationFeature.enable) &&
         !_enabledController.isClosed) {
       bg.BackgroundGeolocation.onEnabledChange((enabled) {
@@ -131,35 +160,13 @@ class BackgroundLocationServiceManager {
   Future<BackgroundLocationServiceManager> initialize(
     LocationManagerConfig config,
   ) async {
-    final bgConfig = bg.Config(
-      reset: config.reset,
-      debug: config.logging.debug,
-      logLevel: mapLogLevel(config.logging.logLevel),
-      geolocation: bg.GeoConfig(
-        desiredAccuracy: mapAccuracy(config.tracking.accuracy),
-        distanceFilter: config.tracking.distanceFilter,
-        stopTimeout: config.tracking.stopTimeout,
-        stationaryRadius: config.tracking.movementThreshold.toInt(),
-        locationUpdateInterval: config.tracking.locationUpdateInterval,
-        fastestLocationUpdateInterval: config.tracking.locationUpdateInterval,
-      ),
-      persistence: bg.PersistenceConfig(
-        maxDaysToPersist: config.persistence.maxDaysToPersist,
-        persistMode: mapPersistMode(config.persistence.persistMode),
-      ),
-      app: bg.AppConfig(
-        stopOnTerminate: config.lifecycle.stopOnTerminate,
-        startOnBoot: config.lifecycle.startOnBoot,
-        enableHeadless: true,
-        notification: bg.Notification(
-          title: config.notification.title,
-          text: config.notification.message,
-          priority: mapPriority(config.notification.priority),
-        ),
-      ),
-    );
+    final bgConfig = mapToBgConfig(config);
 
     await bg.BackgroundGeolocation.ready(bgConfig);
+    //shall listen location at least if initialized is called
+    addOnLocation();
+    //shall start listening immediately once initialized
+    await start();
     return this;
   }
 
@@ -170,24 +177,30 @@ class BackgroundLocationServiceManager {
   Future<void> start() async {
     final state = await bg.BackgroundGeolocation.state;
     if (state.enabled) {
-      print('[LocationServiceManager] Plugin already enabled, skipping start()');
+      print(
+        '[LocationServiceManager] Plugin already enabled, skipping start()',
+      );
       return;
     }
+    recreateControllersAndAttachListeners();
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
   }
 
-  Future<void> stop() async{
+  Future<void> stop() async {
     await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
+    await clearListeners();
   }
 
-  Future<void> updateConfigs(Map<String, dynamic> extras) async {
-    await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
+  Future<void> updateConfigs(LocationManagerConfig config) async {
+    final bgConfig = mapToBgConfig(config);
+    await bg.BackgroundGeolocation.setConfig(bgConfig);
   }
 
   Future<void> setStationGeofences(List<Station> stations) async {
     await bg.BackgroundGeolocation.removeGeofences();
+    stations = stations;
     for (var station in stations) {
       await bg.BackgroundGeolocation.addGeofence(
         bg.Geofence(
@@ -237,13 +250,22 @@ class BackgroundLocationServiceManager {
     return _enabledFeatures.contains(feature);
   }
 
-  void dispose() {
+  Future<void> clearListeners() async {
+    bg.BackgroundGeolocation.removeListeners();
+    await _locationController.close();
+    await _motionController.close();
+    await _geofenceController.close();
+    await _statusController.close();
+    await _enabledController.close();
+  }
+
+  Future<void> dispose() async {
     bg.BackgroundGeolocation.removeListeners();
     _enabledFeatures.clear();
-    _locationController.close();
-    _motionController.close();
-    _geofenceController.close();
-    _statusController.close();
-    _enabledController.close();
+    await _locationController.close();
+    await _motionController.close();
+    await _geofenceController.close();
+    await _statusController.close();
+    await _enabledController.close();
   }
 }

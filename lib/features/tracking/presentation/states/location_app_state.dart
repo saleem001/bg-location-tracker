@@ -14,25 +14,6 @@ abstract class LocationAppState with _$LocationAppState {
     MotionChangeEvent? motion,
     GeofenceEvent? geofence,
     LocationServiceStatus? serviceStatus,
-
-    // Service & motion
-    @Default(false) bool isServiceEnabled,
-    @Default(true) bool isStationary,
-    @Default(false) bool isMoving,
-    @Default(false) bool isLoading,
-
-    // Trip info
-    TripState? activeTrip,
-
-    // Current location tracking
-    LocationTrackingEvent? currentLocation,
-    @Default([]) List<LocationTrackingEvent> locationHistory,
-    @Default(0.0) double speedKmh,
-
-    // Misc
-    LocationTrackingEvent? pendingDestination,
-    String? lastActivity,
-    String? error,
   }) = _LocationAppState;
 
   factory LocationAppState.initial() => const LocationAppState();

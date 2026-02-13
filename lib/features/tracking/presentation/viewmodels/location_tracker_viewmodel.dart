@@ -146,12 +146,12 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       if (!state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
-            .subscribeOnLocation()
-            .subscribeOnAutoArrival(stations)
-            .subscribeOnServiceStatusChange()
-            .subscribeOnMotionChange()
-            .initialize(config);
-        // .then((manager) => manager.start());
+            .addOnLocation()
+            // .addOnGeofence(stations)
+            // .addOnServiceStatusChange()
+            // .addOnMotionChange()
+            .initialize(config)
+            .then((manager) => manager.start());
         state = state.copyWith(isServiceEnabled: true);
       }
 
@@ -165,17 +165,6 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
 
-      // final List<Station> geofenceInfos = stations.map((s) {
-      //   final name = s['name'] as String;
-      //   return Station(
-      //     id: "$tripId:::$name",
-      //     name: name,
-      //     latitude: s['lat'] as double,
-      //     longitude: s['lng'] as double,
-      //     radius: (s['radius'] as num?)?.toDouble() ?? 380.0,
-      //   );
-      // }).toList();
-
       final newTrip = TripState.newTrip(
         tripId: tripId,
         sourceLat: sourceLat,
@@ -186,13 +175,6 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
-
-      // await _manager.setStationGeofences(geofenceInfos.map((g) => {
-      //   'id': g.id,
-      //   'lat': g.latitude,
-      //   'lng': g.longitude,
-      //   'radius': g.radius,
-      // }).toList());
 
       await _manager.start();
 
