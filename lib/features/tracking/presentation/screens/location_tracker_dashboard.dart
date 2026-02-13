@@ -48,8 +48,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
 
   @override
   void dispose() {
-    for (var s in _stations) {
-      s.dispose();
+    for (var station in _stations) {
+      station.dispose();
     }
     super.dispose();
   }
@@ -427,10 +427,10 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   Future<void> _handleStartTrip(dynamic viewModel) async {
     // Validation
     for (int i = 0; i < _stations.length; i++) {
-      final s = _stations[i];
-      if (s.name.text.trim().isEmpty ||
-          s.lat.text.trim().isEmpty ||
-          s.lng.text.trim().isEmpty) {
+      final station = _stations[i];
+      if (station.name.text.trim().isEmpty ||
+          station.lat.text.trim().isEmpty ||
+          station.lng.text.trim().isEmpty) {
         Toast.show(
           "Please fill all fields for Station ${i + 1}",
           duration: Toast.lengthLong,
@@ -438,8 +438,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         return;
       }
 
-      if (double.tryParse(s.lat.text) == null ||
-          double.tryParse(s.lng.text) == null) {
+      if (double.tryParse(station.lat.text) == null ||
+          double.tryParse(station.lng.text) == null) {
         Toast.show(
           "Invalid Lat/Lng for Station ${i + 1}",
           duration: Toast.lengthLong,
