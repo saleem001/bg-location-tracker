@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:bg_location_tracker/common/utils/plugin_logs.dart';
 
 /// Provider for managing plugin logs

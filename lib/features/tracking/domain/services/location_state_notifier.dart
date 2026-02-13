@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:riverpod/riverpod.dart';
 import '../../domain/entities/tracking_event.dart';
 import '../../domain/entities/geofence_event.dart';

@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/entities/location_service_status.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/geofence_event.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
