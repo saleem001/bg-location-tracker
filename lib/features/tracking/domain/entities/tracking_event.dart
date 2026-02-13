@@ -1,7 +1,7 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:track_me/common/constants/app_constants.dart';
-import 'package:track_me/common/mapper/data_mapper.dart';
+import 'package:bg_location_tracker/common/constants/app_constants.dart';
+import 'package:bg_location_tracker/common/mapper/data_mapper.dart';
 
 class LocationTrackingEvent {
   final double latitude;

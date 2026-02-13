@@ -1,5 +1,5 @@
-import 'package:track_me/features/tracking/domain/entities/captain_location_data.dart';
-import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/captain_location_data.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
 import 'package:uuid/uuid.dart';
 
 class LocationPayloadBuilder {

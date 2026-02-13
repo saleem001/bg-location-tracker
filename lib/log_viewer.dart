@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:track_me/common/utils/plugin_logs.dart';
-import 'package:track_me/features/tracking/presentation/providers/plugin_logs_provider.dart';
+import 'package:bg_location_tracker/common/utils/plugin_logs.dart';
+import 'package:bg_location_tracker/features/tracking/presentation/providers/plugin_logs_provider.dart';
 
 class LogViewerScreen extends ConsumerStatefulWidget {
   const LogViewerScreen({super.key});

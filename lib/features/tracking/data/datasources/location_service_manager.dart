@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:ffi';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:track_me/common/mapper/location_config_mapper.dart';
-import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
-import 'package:track_me/features/tracking/domain/entities/location_service_status.dart';
-import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
-import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
+import 'package:bg_location_tracker/common/mapper/location_config_mapper.dart';
+import 'package:bg_location_tracker/features/tracking/data/datasources/location_plugin_configs.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/location_service_status.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/geofence_event.dart';
 import '../../domain/entities/location_feature.dart';
 import '../../presentation/states/location_state.dart';
 

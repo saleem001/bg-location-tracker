@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/entities/location_service_status.dart';
-import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
-import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/geofence_event.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
 import '../../domain/services/geofence_notification_handler.dart';
 import '../../domain/services/location_state_notifier.dart';
 import '../states/location_app_state.dart';

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/src/framework.dart';
-import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
+import 'package:bg_location_tracker/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../../../../common/utils/scope_functions.dart';
 import '../providers/tracking_providers.dart';
 import '../states/location_app_state.dart';
@@ -8,10 +7,7 @@ import '../states/location_state.dart';
 
 import '../../domain/entities/geofence_event.dart';
 import '../../domain/entities/tracking_event.dart';
-import '../../domain/entities/location_event.dart';
 import '../../data/datasources/location_service_manager.dart';
-import '../../data/datasources/socket_sync_service.dart';
-import '../../data/datasources/location_service_config.dart';
 import '../../../../common/utils/location_utils.dart';
 import '../../presentation/providers/plugin_logs_provider.dart';
 

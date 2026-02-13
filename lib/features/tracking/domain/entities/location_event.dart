@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
+import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
 
 import 'geofence_event.dart';
 import 'location_service_status.dart';
