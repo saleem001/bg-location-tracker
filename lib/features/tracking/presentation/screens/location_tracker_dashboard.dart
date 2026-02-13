@@ -454,13 +454,16 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
-      final List<Map<String, dynamic>> stations = _stations.map((s) {
-        return {
-          'name': s.name.text.trim(),
-          'lat': double.parse(s.lat.text.replaceAll(' ', '')),
-          'lng': double.parse(s.lng.text.replaceAll(' ', '')),
-          'radius': 200.0,
-        };
+      final List<Station> stations = _stations.map((s) {
+        return Station(
+          id: "trip_${DateTime.now().millisecondsSinceEpoch}",
+          name: s.name.text.trim(),// assuming 'name' is unique
+          latitude: double.parse(s.lat.text.replaceAll(' ', '')),
+          longitude: double.parse(s.lng.text.replaceAll(' ', '')),
+          radius: 300.0,
+          notifyOnEntry: true, // default, can be customized per station
+          notifyOnExit: true, // default, can be customized per station
+        );
       }).toList();
 
       await viewModel.startTrip(

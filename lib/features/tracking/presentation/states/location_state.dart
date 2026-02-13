@@ -2,7 +2,7 @@ import '../../domain/entities/tracking_event.dart';
 
 enum GeofenceStatus { none, arrived, departed }
 
-class GeofenceInfo {
+class Station {
   final String id;
   final String name;
   final double latitude;
@@ -11,24 +11,28 @@ class GeofenceInfo {
   final bool isInside;
   final double distanceMeters;
   final GeofenceStatus status;
+  final bool notifyOnEntry;
+  final bool notifyOnExit;
 
-  GeofenceInfo({
+  Station({
     required this.id,
     required this.name,
     required this.latitude,
     required this.longitude,
-    required this.radius,
+    this.radius = 200.0, // default radius
     this.isInside = false,
     this.distanceMeters = 0.0,
+    this.notifyOnEntry = true, // default notification on entry
+    this.notifyOnExit = false, // default notification on exi
     this.status = GeofenceStatus.none,
   });
 
-  GeofenceInfo copyWith({
+  Station copyWith({
     bool? isInside,
     double? distanceMeters,
     GeofenceStatus? status,
   }) =>
-      GeofenceInfo(
+      Station(
         id: id,
         name: name,
         latitude: latitude,
@@ -44,7 +48,7 @@ class TripState {
   final String tripId;
   final double sourceLat;
   final double sourceLng;
-  final List<GeofenceInfo> geofences;
+  final List<Station> geofences;
   final double distanceRemainingMeters; // To nearest geofence maybe? Or first one?
   final bool hasArrived;
   final DateTime? startedAt;
@@ -67,7 +71,7 @@ class TripState {
     required String tripId,
     required double sourceLat,
     required double sourceLng,
-    required List<GeofenceInfo> geofences,
+    required List<Station> geofences,
     String? captainId,
     String? rideId,
   }) =>
@@ -82,7 +86,7 @@ class TripState {
       );
 
   TripState copyWith({
-    List<GeofenceInfo>? geofences,
+    List<Station>? geofences,
     double? distanceRemainingMeters,
     bool? hasArrived,
     String? captainId,

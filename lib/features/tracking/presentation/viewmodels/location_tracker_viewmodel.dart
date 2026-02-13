@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod/src/framework.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../../../../common/utils/scope_functions.dart';
-import '../../domain/entities/staton.dart';
 import '../providers/tracking_providers.dart';
 import '../states/location_app_state.dart';
 import '../states/location_state.dart';
@@ -80,8 +79,9 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
       updatedTrip = updatedTrip.copyWith(
         geofences: updatedGeofences,
-        distanceRemainingMeters:
-            minDistance == double.infinity ? 0.0 : minDistance,
+        distanceRemainingMeters: minDistance == double.infinity
+            ? 0.0
+            : minDistance,
         hasArrived: minDistance < 50, // 50 meters from any station
       );
     }
@@ -132,14 +132,13 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   Future<void> startTrip({
     required double sourceLat,
     required double sourceLng,
-    required List<Map<String, dynamic>> stations,
+    required List<Station> stations,
     String? captainId,
     String? rideId,
     bool reset = true,
   }) async {
     if (state.isLoading || state.activeTrip != null) return;
     state = state.copyWith(isLoading: true, clearError: true);
-    final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
     try {
       // Simulate 2 seconds of processing/loading as requested
       await Future.delayed(const Duration(seconds: 2));
@@ -148,16 +147,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
             .subscribeOnLocation()
-            .subscribeOnAutoArrival([
-              Station(
-                id: tripId,
-                latitude: destinationLat,
-                longitude: destinationLng,
-                radius: geofenceRadius,
-                notifyOnEntry: true,
-                notifyOnExit: false,
-              ),
-            ])
+            .subscribeOnAutoArrival(stations)
             .subscribeOnServiceStatusChange()
             .subscribeOnMotionChange()
             .initialize(config);
@@ -172,56 +162,43 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       //     tripStatus: "ON_TRIP",
       //   ),
       // );
-            .onLocation()
-            .onAutoArrival()
-            .onServiceStatusChange()
-            .onMotionChange()
-            .initialize(config);
-        state = state.copyWith(isServiceEnabled: true);
-      }
-
-      _syncService.updateConfig(
-        LocationServiceConfig(
-          captainId: captainId,
-          rideId: rideId,
-          tripStatus: "ON_TRIP",
-        ),
-      );
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
-      
-      final List<GeofenceInfo> geofenceInfos = stations.map((s) {
-        final name = s['name'] as String;
-        return GeofenceInfo(
-          id: "$tripId:::$name",
-          name: name,
-          latitude: s['lat'] as double,
-          longitude: s['lng'] as double,
-          radius: (s['radius'] as num?)?.toDouble() ?? 380.0,
-        );
-      }).toList();
+
+      // final List<Station> geofenceInfos = stations.map((s) {
+      //   final name = s['name'] as String;
+      //   return Station(
+      //     id: "$tripId:::$name",
+      //     name: name,
+      //     latitude: s['lat'] as double,
+      //     longitude: s['lng'] as double,
+      //     radius: (s['radius'] as num?)?.toDouble() ?? 380.0,
+      //   );
+      // }).toList();
 
       final newTrip = TripState.newTrip(
         tripId: tripId,
         sourceLat: sourceLat,
         sourceLng: sourceLng,
-        geofences: geofenceInfos,
+        geofences: stations,
         captainId: captainId,
         rideId: rideId,
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
 
-      await _manager.setStationGeofences(geofenceInfos.map((g) => {
-        'id': g.id,
-        'lat': g.latitude,
-        'lng': g.longitude,
-        'radius': g.radius,
-      }).toList());
+      // await _manager.setStationGeofences(geofenceInfos.map((g) => {
+      //   'id': g.id,
+      //   'lat': g.latitude,
+      //   'lng': g.longitude,
+      //   'radius': g.radius,
+      // }).toList());
 
       await _manager.start();
 
-      ref.watch(pluginLogsProvider.notifier).logInfo("Trip started with ${geofenceInfos.length} geofences");
+      ref
+          .watch(pluginLogsProvider.notifier)
+          .logInfo("Trip started with ${stations.length} geofences");
     } catch (e) {
       ref
           .watch(pluginLogsProvider.notifier)

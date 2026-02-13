@@ -8,7 +8,7 @@ import 'package:track_me/features/tracking/domain/entities/location_service_stat
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
 import '../../domain/entities/location_feature.dart';
-import '../../domain/entities/staton.dart';
+import '../../presentation/states/location_state.dart';
 
 /// Manages the background location plugin and exposes mapped domain streams.
 /// Uses a fluent API for configuration and an aggregator for stream access.
