@@ -55,14 +55,14 @@ extension LocationEventPatterns on LocationEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( LocationUpdated value)?  locationUpdated,TResult Function( MotionChanged value)?  motionChanged,TResult Function( GeofenceTriggered value)?  geofenceTriggered,TResult Function( ServiceStatusChanged value)?  serviceStatusChanged,TResult Function( ServiceEnabledChanged value)?  serviceEnabledChanged,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _LocationUpdated value)?  locationUpdated,TResult Function( _GeofenceTriggered value)?  geofenceTriggered,TResult Function( _MotionChanged value)?  motionChanged,TResult Function( _ServiceStatusChanged value)?  serviceStatusChanged,TResult Function( _ServiceEnabledChanged value)?  serviceEnabledChanged,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case LocationUpdated() when locationUpdated != null:
-return locationUpdated(_that);case MotionChanged() when motionChanged != null:
-return motionChanged(_that);case GeofenceTriggered() when geofenceTriggered != null:
-return geofenceTriggered(_that);case ServiceStatusChanged() when serviceStatusChanged != null:
-return serviceStatusChanged(_that);case ServiceEnabledChanged() when serviceEnabledChanged != null:
+case _LocationUpdated() when locationUpdated != null:
+return locationUpdated(_that);case _GeofenceTriggered() when geofenceTriggered != null:
+return geofenceTriggered(_that);case _MotionChanged() when motionChanged != null:
+return motionChanged(_that);case _ServiceStatusChanged() when serviceStatusChanged != null:
+return serviceStatusChanged(_that);case _ServiceEnabledChanged() when serviceEnabledChanged != null:
 return serviceEnabledChanged(_that);case _:
   return orElse();
 
@@ -81,14 +81,14 @@ return serviceEnabledChanged(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( LocationUpdated value)  locationUpdated,required TResult Function( MotionChanged value)  motionChanged,required TResult Function( GeofenceTriggered value)  geofenceTriggered,required TResult Function( ServiceStatusChanged value)  serviceStatusChanged,required TResult Function( ServiceEnabledChanged value)  serviceEnabledChanged,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _LocationUpdated value)  locationUpdated,required TResult Function( _GeofenceTriggered value)  geofenceTriggered,required TResult Function( _MotionChanged value)  motionChanged,required TResult Function( _ServiceStatusChanged value)  serviceStatusChanged,required TResult Function( _ServiceEnabledChanged value)  serviceEnabledChanged,}){
 final _that = this;
 switch (_that) {
-case LocationUpdated():
-return locationUpdated(_that);case MotionChanged():
-return motionChanged(_that);case GeofenceTriggered():
-return geofenceTriggered(_that);case ServiceStatusChanged():
-return serviceStatusChanged(_that);case ServiceEnabledChanged():
+case _LocationUpdated():
+return locationUpdated(_that);case _GeofenceTriggered():
+return geofenceTriggered(_that);case _MotionChanged():
+return motionChanged(_that);case _ServiceStatusChanged():
+return serviceStatusChanged(_that);case _ServiceEnabledChanged():
 return serviceEnabledChanged(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -106,14 +106,14 @@ return serviceEnabledChanged(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( LocationUpdated value)?  locationUpdated,TResult? Function( MotionChanged value)?  motionChanged,TResult? Function( GeofenceTriggered value)?  geofenceTriggered,TResult? Function( ServiceStatusChanged value)?  serviceStatusChanged,TResult? Function( ServiceEnabledChanged value)?  serviceEnabledChanged,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _LocationUpdated value)?  locationUpdated,TResult? Function( _GeofenceTriggered value)?  geofenceTriggered,TResult? Function( _MotionChanged value)?  motionChanged,TResult? Function( _ServiceStatusChanged value)?  serviceStatusChanged,TResult? Function( _ServiceEnabledChanged value)?  serviceEnabledChanged,}){
 final _that = this;
 switch (_that) {
-case LocationUpdated() when locationUpdated != null:
-return locationUpdated(_that);case MotionChanged() when motionChanged != null:
-return motionChanged(_that);case GeofenceTriggered() when geofenceTriggered != null:
-return geofenceTriggered(_that);case ServiceStatusChanged() when serviceStatusChanged != null:
-return serviceStatusChanged(_that);case ServiceEnabledChanged() when serviceEnabledChanged != null:
+case _LocationUpdated() when locationUpdated != null:
+return locationUpdated(_that);case _GeofenceTriggered() when geofenceTriggered != null:
+return geofenceTriggered(_that);case _MotionChanged() when motionChanged != null:
+return motionChanged(_that);case _ServiceStatusChanged() when serviceStatusChanged != null:
+return serviceStatusChanged(_that);case _ServiceEnabledChanged() when serviceEnabledChanged != null:
 return serviceEnabledChanged(_that);case _:
   return null;
 
@@ -131,13 +131,13 @@ return serviceEnabledChanged(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( LocationTrackingEvent location,  bool isMoving)?  locationUpdated,TResult Function( MotionChangeEvent motion)?  motionChanged,TResult Function( GeofenceEvent geofence)?  geofenceTriggered,TResult Function( LocationServiceStatus status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( LocationTrackingEvent location)?  locationUpdated,TResult Function( GeofenceEvent geofence)?  geofenceTriggered,TResult Function( MotionChangeEvent motion)?  motionChanged,TResult Function( LocationServiceStatus status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case LocationUpdated() when locationUpdated != null:
-return locationUpdated(_that.location,_that.isMoving);case MotionChanged() when motionChanged != null:
-return motionChanged(_that.motion);case GeofenceTriggered() when geofenceTriggered != null:
-return geofenceTriggered(_that.geofence);case ServiceStatusChanged() when serviceStatusChanged != null:
-return serviceStatusChanged(_that.status);case ServiceEnabledChanged() when serviceEnabledChanged != null:
+case _LocationUpdated() when locationUpdated != null:
+return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
+return geofenceTriggered(_that.geofence);case _MotionChanged() when motionChanged != null:
+return motionChanged(_that.motion);case _ServiceStatusChanged() when serviceStatusChanged != null:
+return serviceStatusChanged(_that.status);case _ServiceEnabledChanged() when serviceEnabledChanged != null:
 return serviceEnabledChanged(_that.isEnabled);case _:
   return orElse();
 
@@ -156,13 +156,13 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( LocationTrackingEvent location,  bool isMoving)  locationUpdated,required TResult Function( MotionChangeEvent motion)  motionChanged,required TResult Function( GeofenceEvent geofence)  geofenceTriggered,required TResult Function( LocationServiceStatus status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( LocationTrackingEvent location)  locationUpdated,required TResult Function( GeofenceEvent geofence)  geofenceTriggered,required TResult Function( MotionChangeEvent motion)  motionChanged,required TResult Function( LocationServiceStatus status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
-case LocationUpdated():
-return locationUpdated(_that.location,_that.isMoving);case MotionChanged():
-return motionChanged(_that.motion);case GeofenceTriggered():
-return geofenceTriggered(_that.geofence);case ServiceStatusChanged():
-return serviceStatusChanged(_that.status);case ServiceEnabledChanged():
+case _LocationUpdated():
+return locationUpdated(_that.location);case _GeofenceTriggered():
+return geofenceTriggered(_that.geofence);case _MotionChanged():
+return motionChanged(_that.motion);case _ServiceStatusChanged():
+return serviceStatusChanged(_that.status);case _ServiceEnabledChanged():
 return serviceEnabledChanged(_that.isEnabled);case _:
   throw StateError('Unexpected subclass');
 
@@ -180,13 +180,13 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( LocationTrackingEvent location,  bool isMoving)?  locationUpdated,TResult? Function( MotionChangeEvent motion)?  motionChanged,TResult? Function( GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( LocationServiceStatus status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( LocationTrackingEvent location)?  locationUpdated,TResult? Function( GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( MotionChangeEvent motion)?  motionChanged,TResult? Function( LocationServiceStatus status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
-case LocationUpdated() when locationUpdated != null:
-return locationUpdated(_that.location,_that.isMoving);case MotionChanged() when motionChanged != null:
-return motionChanged(_that.motion);case GeofenceTriggered() when geofenceTriggered != null:
-return geofenceTriggered(_that.geofence);case ServiceStatusChanged() when serviceStatusChanged != null:
-return serviceStatusChanged(_that.status);case ServiceEnabledChanged() when serviceEnabledChanged != null:
+case _LocationUpdated() when locationUpdated != null:
+return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
+return geofenceTriggered(_that.geofence);case _MotionChanged() when motionChanged != null:
+return motionChanged(_that.motion);case _ServiceStatusChanged() when serviceStatusChanged != null:
+return serviceStatusChanged(_that.status);case _ServiceEnabledChanged() when serviceEnabledChanged != null:
 return serviceEnabledChanged(_that.isEnabled);case _:
   return null;
 
@@ -198,44 +198,43 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// @nodoc
 
 
-class LocationUpdated implements LocationEvent {
-  const LocationUpdated({required this.location, required this.isMoving});
+class _LocationUpdated implements LocationEvent {
+  const _LocationUpdated(this.location);
   
 
  final  LocationTrackingEvent location;
- final  bool isMoving;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$LocationUpdatedCopyWith<LocationUpdated> get copyWith => _$LocationUpdatedCopyWithImpl<LocationUpdated>(this, _$identity);
+_$LocationUpdatedCopyWith<_LocationUpdated> get copyWith => __$LocationUpdatedCopyWithImpl<_LocationUpdated>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocationUpdated&&(identical(other.location, location) || other.location == location)&&(identical(other.isMoving, isMoving) || other.isMoving == isMoving));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocationUpdated&&(identical(other.location, location) || other.location == location));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,location,isMoving);
+int get hashCode => Object.hash(runtimeType,location);
 
 @override
 String toString() {
-  return 'LocationEvent.locationUpdated(location: $location, isMoving: $isMoving)';
+  return 'LocationEvent.locationUpdated(location: $location)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $LocationUpdatedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
-  factory $LocationUpdatedCopyWith(LocationUpdated value, $Res Function(LocationUpdated) _then) = _$LocationUpdatedCopyWithImpl;
+abstract mixin class _$LocationUpdatedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
+  factory _$LocationUpdatedCopyWith(_LocationUpdated value, $Res Function(_LocationUpdated) _then) = __$LocationUpdatedCopyWithImpl;
 @useResult
 $Res call({
- LocationTrackingEvent location, bool isMoving
+ LocationTrackingEvent location
 });
 
 
@@ -243,20 +242,19 @@ $Res call({
 
 }
 /// @nodoc
-class _$LocationUpdatedCopyWithImpl<$Res>
-    implements $LocationUpdatedCopyWith<$Res> {
-  _$LocationUpdatedCopyWithImpl(this._self, this._then);
+class __$LocationUpdatedCopyWithImpl<$Res>
+    implements _$LocationUpdatedCopyWith<$Res> {
+  __$LocationUpdatedCopyWithImpl(this._self, this._then);
 
-  final LocationUpdated _self;
-  final $Res Function(LocationUpdated) _then;
+  final _LocationUpdated _self;
+  final $Res Function(_LocationUpdated) _then;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? location = null,Object? isMoving = null,}) {
-  return _then(LocationUpdated(
-location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as LocationTrackingEvent,isMoving: null == isMoving ? _self.isMoving : isMoving // ignore: cast_nullable_to_non_nullable
-as bool,
+@pragma('vm:prefer-inline') $Res call({Object? location = null,}) {
+  return _then(_LocationUpdated(
+null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as LocationTrackingEvent,
   ));
 }
 
@@ -266,74 +264,8 @@ as bool,
 /// @nodoc
 
 
-class MotionChanged implements LocationEvent {
-  const MotionChanged({required this.motion});
-  
-
- final  MotionChangeEvent motion;
-
-/// Create a copy of LocationEvent
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$MotionChangedCopyWith<MotionChanged> get copyWith => _$MotionChangedCopyWithImpl<MotionChanged>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MotionChanged&&(identical(other.motion, motion) || other.motion == motion));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,motion);
-
-@override
-String toString() {
-  return 'LocationEvent.motionChanged(motion: $motion)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $MotionChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
-  factory $MotionChangedCopyWith(MotionChanged value, $Res Function(MotionChanged) _then) = _$MotionChangedCopyWithImpl;
-@useResult
-$Res call({
- MotionChangeEvent motion
-});
-
-
-
-
-}
-/// @nodoc
-class _$MotionChangedCopyWithImpl<$Res>
-    implements $MotionChangedCopyWith<$Res> {
-  _$MotionChangedCopyWithImpl(this._self, this._then);
-
-  final MotionChanged _self;
-  final $Res Function(MotionChanged) _then;
-
-/// Create a copy of LocationEvent
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? motion = null,}) {
-  return _then(MotionChanged(
-motion: null == motion ? _self.motion : motion // ignore: cast_nullable_to_non_nullable
-as MotionChangeEvent,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class GeofenceTriggered implements LocationEvent {
-  const GeofenceTriggered({required this.geofence});
+class _GeofenceTriggered implements LocationEvent {
+  const _GeofenceTriggered(this.geofence);
   
 
  final  GeofenceEvent geofence;
@@ -342,13 +274,13 @@ class GeofenceTriggered implements LocationEvent {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$GeofenceTriggeredCopyWith<GeofenceTriggered> get copyWith => _$GeofenceTriggeredCopyWithImpl<GeofenceTriggered>(this, _$identity);
+_$GeofenceTriggeredCopyWith<_GeofenceTriggered> get copyWith => __$GeofenceTriggeredCopyWithImpl<_GeofenceTriggered>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GeofenceTriggered&&(identical(other.geofence, geofence) || other.geofence == geofence));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GeofenceTriggered&&(identical(other.geofence, geofence) || other.geofence == geofence));
 }
 
 
@@ -364,8 +296,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $GeofenceTriggeredCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
-  factory $GeofenceTriggeredCopyWith(GeofenceTriggered value, $Res Function(GeofenceTriggered) _then) = _$GeofenceTriggeredCopyWithImpl;
+abstract mixin class _$GeofenceTriggeredCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
+  factory _$GeofenceTriggeredCopyWith(_GeofenceTriggered value, $Res Function(_GeofenceTriggered) _then) = __$GeofenceTriggeredCopyWithImpl;
 @useResult
 $Res call({
  GeofenceEvent geofence
@@ -376,18 +308,18 @@ $Res call({
 
 }
 /// @nodoc
-class _$GeofenceTriggeredCopyWithImpl<$Res>
-    implements $GeofenceTriggeredCopyWith<$Res> {
-  _$GeofenceTriggeredCopyWithImpl(this._self, this._then);
+class __$GeofenceTriggeredCopyWithImpl<$Res>
+    implements _$GeofenceTriggeredCopyWith<$Res> {
+  __$GeofenceTriggeredCopyWithImpl(this._self, this._then);
 
-  final GeofenceTriggered _self;
-  final $Res Function(GeofenceTriggered) _then;
+  final _GeofenceTriggered _self;
+  final $Res Function(_GeofenceTriggered) _then;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? geofence = null,}) {
-  return _then(GeofenceTriggered(
-geofence: null == geofence ? _self.geofence : geofence // ignore: cast_nullable_to_non_nullable
+  return _then(_GeofenceTriggered(
+null == geofence ? _self.geofence : geofence // ignore: cast_nullable_to_non_nullable
 as GeofenceEvent,
   ));
 }
@@ -398,8 +330,74 @@ as GeofenceEvent,
 /// @nodoc
 
 
-class ServiceStatusChanged implements LocationEvent {
-  const ServiceStatusChanged({required this.status});
+class _MotionChanged implements LocationEvent {
+  const _MotionChanged(this.motion);
+  
+
+ final  MotionChangeEvent motion;
+
+/// Create a copy of LocationEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MotionChangedCopyWith<_MotionChanged> get copyWith => __$MotionChangedCopyWithImpl<_MotionChanged>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MotionChanged&&(identical(other.motion, motion) || other.motion == motion));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,motion);
+
+@override
+String toString() {
+  return 'LocationEvent.motionChanged(motion: $motion)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MotionChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
+  factory _$MotionChangedCopyWith(_MotionChanged value, $Res Function(_MotionChanged) _then) = __$MotionChangedCopyWithImpl;
+@useResult
+$Res call({
+ MotionChangeEvent motion
+});
+
+
+
+
+}
+/// @nodoc
+class __$MotionChangedCopyWithImpl<$Res>
+    implements _$MotionChangedCopyWith<$Res> {
+  __$MotionChangedCopyWithImpl(this._self, this._then);
+
+  final _MotionChanged _self;
+  final $Res Function(_MotionChanged) _then;
+
+/// Create a copy of LocationEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? motion = null,}) {
+  return _then(_MotionChanged(
+null == motion ? _self.motion : motion // ignore: cast_nullable_to_non_nullable
+as MotionChangeEvent,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _ServiceStatusChanged implements LocationEvent {
+  const _ServiceStatusChanged(this.status);
   
 
  final  LocationServiceStatus status;
@@ -408,13 +406,13 @@ class ServiceStatusChanged implements LocationEvent {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$ServiceStatusChangedCopyWith<ServiceStatusChanged> get copyWith => _$ServiceStatusChangedCopyWithImpl<ServiceStatusChanged>(this, _$identity);
+_$ServiceStatusChangedCopyWith<_ServiceStatusChanged> get copyWith => __$ServiceStatusChangedCopyWithImpl<_ServiceStatusChanged>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceStatusChanged&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceStatusChanged&&(identical(other.status, status) || other.status == status));
 }
 
 
@@ -430,8 +428,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $ServiceStatusChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
-  factory $ServiceStatusChangedCopyWith(ServiceStatusChanged value, $Res Function(ServiceStatusChanged) _then) = _$ServiceStatusChangedCopyWithImpl;
+abstract mixin class _$ServiceStatusChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
+  factory _$ServiceStatusChangedCopyWith(_ServiceStatusChanged value, $Res Function(_ServiceStatusChanged) _then) = __$ServiceStatusChangedCopyWithImpl;
 @useResult
 $Res call({
  LocationServiceStatus status
@@ -442,18 +440,18 @@ $Res call({
 
 }
 /// @nodoc
-class _$ServiceStatusChangedCopyWithImpl<$Res>
-    implements $ServiceStatusChangedCopyWith<$Res> {
-  _$ServiceStatusChangedCopyWithImpl(this._self, this._then);
+class __$ServiceStatusChangedCopyWithImpl<$Res>
+    implements _$ServiceStatusChangedCopyWith<$Res> {
+  __$ServiceStatusChangedCopyWithImpl(this._self, this._then);
 
-  final ServiceStatusChanged _self;
-  final $Res Function(ServiceStatusChanged) _then;
+  final _ServiceStatusChanged _self;
+  final $Res Function(_ServiceStatusChanged) _then;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
-  return _then(ServiceStatusChanged(
-status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+  return _then(_ServiceStatusChanged(
+null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as LocationServiceStatus,
   ));
 }
@@ -464,8 +462,8 @@ as LocationServiceStatus,
 /// @nodoc
 
 
-class ServiceEnabledChanged implements LocationEvent {
-  const ServiceEnabledChanged({required this.isEnabled});
+class _ServiceEnabledChanged implements LocationEvent {
+  const _ServiceEnabledChanged(this.isEnabled);
   
 
  final  bool isEnabled;
@@ -474,13 +472,13 @@ class ServiceEnabledChanged implements LocationEvent {
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$ServiceEnabledChangedCopyWith<ServiceEnabledChanged> get copyWith => _$ServiceEnabledChangedCopyWithImpl<ServiceEnabledChanged>(this, _$identity);
+_$ServiceEnabledChangedCopyWith<_ServiceEnabledChanged> get copyWith => __$ServiceEnabledChangedCopyWithImpl<_ServiceEnabledChanged>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceEnabledChanged&&(identical(other.isEnabled, isEnabled) || other.isEnabled == isEnabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceEnabledChanged&&(identical(other.isEnabled, isEnabled) || other.isEnabled == isEnabled));
 }
 
 
@@ -496,8 +494,8 @@ String toString() {
 }
 
 /// @nodoc
-abstract mixin class $ServiceEnabledChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
-  factory $ServiceEnabledChangedCopyWith(ServiceEnabledChanged value, $Res Function(ServiceEnabledChanged) _then) = _$ServiceEnabledChangedCopyWithImpl;
+abstract mixin class _$ServiceEnabledChangedCopyWith<$Res> implements $LocationEventCopyWith<$Res> {
+  factory _$ServiceEnabledChangedCopyWith(_ServiceEnabledChanged value, $Res Function(_ServiceEnabledChanged) _then) = __$ServiceEnabledChangedCopyWithImpl;
 @useResult
 $Res call({
  bool isEnabled
@@ -508,18 +506,18 @@ $Res call({
 
 }
 /// @nodoc
-class _$ServiceEnabledChangedCopyWithImpl<$Res>
-    implements $ServiceEnabledChangedCopyWith<$Res> {
-  _$ServiceEnabledChangedCopyWithImpl(this._self, this._then);
+class __$ServiceEnabledChangedCopyWithImpl<$Res>
+    implements _$ServiceEnabledChangedCopyWith<$Res> {
+  __$ServiceEnabledChangedCopyWithImpl(this._self, this._then);
 
-  final ServiceEnabledChanged _self;
-  final $Res Function(ServiceEnabledChanged) _then;
+  final _ServiceEnabledChanged _self;
+  final $Res Function(_ServiceEnabledChanged) _then;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? isEnabled = null,}) {
-  return _then(ServiceEnabledChanged(
-isEnabled: null == isEnabled ? _self.isEnabled : isEnabled // ignore: cast_nullable_to_non_nullable
+  return _then(_ServiceEnabledChanged(
+null == isEnabled ? _self.isEnabled : isEnabled // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

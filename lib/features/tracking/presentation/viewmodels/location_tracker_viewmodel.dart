@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod/src/framework.dart';
 import 'package:track_me/features/tracking/data/datasources/location_plugin_configs.dart';
+import '../../../../common/utils/scope_functions.dart';
+import '../../domain/entities/staton.dart';
 import '../providers/tracking_providers.dart';
+import '../states/location_app_state.dart';
 import '../states/location_state.dart';
 
 import '../../domain/entities/geofence_event.dart';
@@ -19,11 +23,11 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     ref.read(socketSyncServiceProvider);
     ref.read(geofenceNotificationHandlerProvider);
 
-    // Listen to the unified event stream from the aggregator
-    ref.listen(locationEventStreamProvider, (previous, next) {
-      if (next.hasValue) {
-        _handleUnifiedEvent(next.value!);
-      }
+    ref.listen<LocationAppState>(locationStateNotifierProvider, (
+      previous,
+      next,
+    ) {
+      _handleStateChange(previous, next);
     });
 
     return LocationState.initial();
@@ -33,25 +37,27 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   BackgroundLocationServiceManager get _manager =>
       ref.read(backgroundLocationServiceManagerProvider);
 
-  SocketSyncService get _syncService => ref.read(socketSyncServiceProvider);
+  void _handleStateChange(LocationAppState? previous, LocationAppState next) {
+    if (previous?.location != next.location && next.location != null) {
+      next.location?.let((location) {
+        _processLocation(location, location.isMoving);
+      });
+    }
 
-  void _handleUnifiedEvent(LocationEvent event) {
-    switch (event) {
-      case LocationUpdated(:final location, :final isMoving):
-        _processLocation(location, isMoving);
-      case MotionChanged(:final motion):
+    if (previous?.geofence != next.geofence && next.geofence != null) {
+      next.geofence?.let((geofence) {
+        _handleGeofence(geofence.identifier, geofence.action);
+      });
+    }
+
+    if (previous?.motion != next.motion) {
+      next.motion?.let((motion) {
         _processLocation(motion.location, motion.isMoving);
-      case GeofenceTriggered(:final geofence):
-        _handleGeofence(
-          geofence.identifier,
-          geofence.action,
-        );
-      case ServiceStatusChanged():
-        {
-          // TODO: Handle this case.
-        }
-      case ServiceEnabledChanged(:final isEnabled):
-        _handleServiceEnableChange(isEnabled);
+      });
+    }
+
+    if (previous?.isServiceEnabled != next.isServiceEnabled) {
+      _handleServiceEnableChange(next.isServiceEnabled);
     }
   }
 
@@ -121,28 +127,36 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }) async {
     if (state.isLoading || state.activeTrip != null) return;
     state = state.copyWith(isLoading: true, clearError: true);
+    final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
     try {
       if (!state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
-            .onLocation()
-            .onAutoArrival()
-            .onServiceStatusChange()
-            .onMotionChange()
-            .initialize(config)
-            .then((manager) => manager.start());
+            .subscribeOnLocation()
+            .subscribeOnAutoArrival([
+              Station(
+                id: tripId,
+                latitude: destinationLat,
+                longitude: destinationLng,
+                radius: geofenceRadius,
+                notifyOnEntry: true,
+                notifyOnExit: false,
+              ),
+            ])
+            .subscribeOnServiceStatusChange()
+            .subscribeOnMotionChange()
+            .initialize(config);
+        // .then((manager) => manager.start());
         state = state.copyWith(isServiceEnabled: true);
       }
 
-      _syncService.updateConfig(
-        LocationServiceConfig(
-          captainId: captainId,
-          rideId: rideId,
-          tripStatus: "ON_TRIP",
-        ),
-      );
-
-      final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
+      // _syncService.updateConfig(
+      //   LocationServiceConfig(
+      //     captainId: captainId,
+      //     rideId: rideId,
+      //     tripStatus: "ON_TRIP",
+      //   ),
+      // );
 
       final newTrip = TripState.newTrip(
         tripId: tripId,
@@ -157,15 +171,6 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
-
-      await _manager.setStationGeofences([
-        {
-          'id': tripId,
-          'lat': destinationLat,
-          'lng': destinationLng,
-          'radius': geofenceRadius,
-        },
-      ]);
 
       await _manager.start();
 
@@ -185,7 +190,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       await _manager.stop();
 
       // 2. Update captain info to IDLE
-      _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
+      // _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
 
       // 3. Fully reset the state
       state = state.copyWith(

@@ -9,6 +9,7 @@ import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
 import '../../domain/entities/location_event.dart';
 import '../../domain/entities/location_feature.dart';
+import '../../domain/entities/staton.dart';
 
 /// Manages the background location plugin and exposes mapped domain streams.
 /// Uses a fluent API for configuration and an aggregator for stream access.
@@ -50,7 +51,7 @@ class BackgroundLocationServiceManager {
   // Fluent Initialization & Configuration (Chaining)
   // ---------------------------------------------------------------------------
 
-  BackgroundLocationServiceManager onLocation() {
+  BackgroundLocationServiceManager subscribeOnLocation() {
     if (_enabledFeatures.add(LocationFeature.location) &&
         !_locationController.isClosed) {
       bg.BackgroundGeolocation.onLocation((loc) {
@@ -65,7 +66,7 @@ class BackgroundLocationServiceManager {
     await _locationController.close();
   }
 
-  BackgroundLocationServiceManager onMotionChange() {
+  BackgroundLocationServiceManager subscribeOnMotionChange() {
     if (_enabledFeatures.add(LocationFeature.motion) &&
         !_motionController.isClosed) {
       bg.BackgroundGeolocation.onMotionChange((event) {
@@ -80,9 +81,12 @@ class BackgroundLocationServiceManager {
     _motionController.close();
   }
 
-  BackgroundLocationServiceManager onAutoArrival() {
+  BackgroundLocationServiceManager subscribeOnAutoArrival(
+    List<Station> stations,
+  ) {
     if (_enabledFeatures.add(LocationFeature.geofence) &&
         !_geofenceController.isClosed) {
+      setStationGeofences(stations);
       bg.BackgroundGeolocation.onGeofence((event) {
         _geofenceController.add(GeofenceEventMapper().map(event));
       });
@@ -95,7 +99,7 @@ class BackgroundLocationServiceManager {
     _geofenceController.close();
   }
 
-  BackgroundLocationServiceManager onServiceStatusChange() {
+  BackgroundLocationServiceManager subscribeOnServiceStatusChange() {
     if (_enabledFeatures.add(LocationFeature.status) &&
         !_statusController.isClosed) {
       bg.BackgroundGeolocation.onProviderChange((event) {
@@ -110,7 +114,7 @@ class BackgroundLocationServiceManager {
     _statusController.close();
   }
 
-  BackgroundLocationServiceManager onEnableChange() {
+  BackgroundLocationServiceManager subscribeOnEnableChange() {
     if (_enabledFeatures.add(LocationFeature.enable) &&
         !_enabledController.isClosed) {
       bg.BackgroundGeolocation.onEnabledChange((enabled) {
@@ -175,17 +179,17 @@ class BackgroundLocationServiceManager {
     await bg.BackgroundGeolocation.setConfig(bg.Config(extras: extras));
   }
 
-  Future<void> setStationGeofences(List<Map<String, dynamic>> stations) async {
+  Future<void> setStationGeofences(List<Station> stations) async {
     await bg.BackgroundGeolocation.removeGeofences();
     for (var station in stations) {
       await bg.BackgroundGeolocation.addGeofence(
         bg.Geofence(
-          identifier: station['id'],
-          radius: (station['radius'] ?? 200).toDouble(),
-          latitude: station['lat'],
-          longitude: station['lng'],
-          notifyOnEntry: true,
-          notifyOnExit: false,
+          identifier: station.id,
+          latitude: station.latitude,
+          longitude: station.longitude,
+          radius: station.radius,
+          notifyOnEntry: station.notifyOnEntry,
+          notifyOnExit: station.notifyOnExit,
         ),
       );
     }

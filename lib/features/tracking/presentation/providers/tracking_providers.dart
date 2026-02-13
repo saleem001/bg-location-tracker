@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:track_me/features/tracking/domain/services/location_update_service.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/entities/location_service_status.dart';
 import 'package:track_me/features/tracking/domain/entities/geofence_event.dart';
 import 'package:track_me/features/tracking/domain/entities/tracking_event.dart';
 import '../../domain/services/geofence_notification_handler.dart';
+import '../../domain/services/location_state_notifier.dart';
+import '../states/location_app_state.dart';
 import '../states/location_state.dart';
 import '../viewmodels/location_tracker_viewmodel.dart';
 import '../../data/datasources/location_service_manager.dart';
@@ -26,54 +28,58 @@ final backgroundLocationServiceManagerProvider =
       return manager;
     });
 
-// Location Update Service Provider (Bridge: Manager -> Transport)
-final locationUpdateServiceProvider = Provider<LocationUpdateService>((ref) {
-  final transport = ref.watch(trackingTransportProvider);
-  return LocationUpdateService(ref, transport);
-});
-
 // Aggregator Provider
 final locationEventAggregatorProvider = Provider<LocationEventAggregator>((
   ref,
 ) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
 
-  final aggregator = LocationEventAggregator(manager);
-
-  ref.onDispose(() => aggregator.dispose());
-
-  return aggregator;
+  return LocationEventAggregator(
+    locationStream: manager.locationStream,
+    geofenceStream: manager.geofenceStream,
+    motionStream: manager.motionStream,
+    statusStream: manager.statusStream,
+    enabledStream: manager.enabledStream,
+  );
 });
 
-final geofenceNotificationHandlerProvider =
-    Provider<GeofenceNotificationHandler>((ref) {
+final locationStateNotifierProvider =
+    StateNotifierProvider.autoDispose<LocationStateNotifier, LocationAppState>((
+      ref,
+    ) {
       final aggregator = ref.watch(locationEventAggregatorProvider);
 
-      final handler = GeofenceNotificationHandler(aggregator.eventStream);
+      final notifier = LocationStateNotifier(aggregator.events);
 
-      ref.onDispose(() => handler.dispose());
+      // ref.onDispose(() {
+      //   notifier.dispose();
+      // });
 
-      return handler;
+      return notifier;
     });
 
-// Unified Event Stream Provider
-final locationEventStreamProvider = StreamProvider<LocationEvent>((ref) {
+final geofenceNotificationHandlerProvider = Provider<void>((ref) {
   final aggregator = ref.watch(locationEventAggregatorProvider);
-  return aggregator.eventStream;
+
+  final handler = GeofenceNotificationHandler(aggregator.events);
+
+  ref.onDispose(() {
+    handler.dispose();
+  });
 });
 
 // Socket Sync Service Provider
-final socketSyncServiceProvider = Provider<SocketSyncService>((ref) {
-  final transport = ref.watch(trackingTransportProvider);
+final socketSyncServiceProvider = Provider<void>((ref) {
   final aggregator = ref.watch(locationEventAggregatorProvider);
+  final transport = ref.watch(trackingTransportProvider);
+
   final service = SocketSyncService(transport);
 
-  // Listen to the aggregated stream directly from the aggregator
-  service.startListening(aggregator.eventStream);
+  service.start(aggregator.events);
 
-  ref.onDispose(() => service.stopListening());
-
-  return service;
+  ref.onDispose(() {
+    service.dispose();
+  });
 });
 
 // View Model Provider
