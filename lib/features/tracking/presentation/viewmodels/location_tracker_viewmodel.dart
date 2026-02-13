@@ -66,16 +66,23 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     TripState? updatedTrip = state.activeTrip;
 
     if (updatedTrip != null) {
-      final distance = LocationUtils.calculateDistanceMeters(
-        trackingEvent.latitude,
-        trackingEvent.longitude,
-        updatedTrip.destinationLat,
-        updatedTrip.destinationLng,
-      );
+      double minDistance = double.infinity;
+      final updatedGeofences = updatedTrip.geofences.map((g) {
+        final d = LocationUtils.calculateDistanceMeters(
+          trackingEvent.latitude,
+          trackingEvent.longitude,
+          g.latitude,
+          g.longitude,
+        );
+        if (d < minDistance) minDistance = d;
+        return g.copyWith(distanceMeters: d);
+      }).toList();
 
       updatedTrip = updatedTrip.copyWith(
-        distanceRemainingMeters: distance,
-        hasArrived: distance < 50, // 50 meters
+        geofences: updatedGeofences,
+        distanceRemainingMeters:
+            minDistance == double.infinity ? 0.0 : minDistance,
+        hasArrived: minDistance < 50, // 50 meters from any station
       );
     }
 
@@ -100,13 +107,21 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   }
 
   void _handleGeofence(String identifier, GeofenceAction action) {
-    // The identifier is the full tripId (e.g., "trip_123:::StationName")
-    if (state.activeTrip?.tripId != identifier) return;
+    if (state.activeTrip == null) return;
+
+    final updatedGeofences = state.activeTrip!.geofences.map((g) {
+      if (g.id == identifier) {
+        final bool isInside = action == GeofenceAction.enter;
+        return g.copyWith(
+          isInside: isInside,
+          status: isInside ? GeofenceStatus.arrived : GeofenceStatus.departed,
+        );
+      }
+      return g;
+    }).toList();
 
     state = state.copyWith(
-      activeTrip: state.activeTrip?.copyWith(
-        isWithinGeofence: action == GeofenceAction.enter,
-      ),
+      activeTrip: state.activeTrip!.copyWith(geofences: updatedGeofences),
     );
   }
 
@@ -117,18 +132,18 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
   Future<void> startTrip({
     required double sourceLat,
     required double sourceLng,
-    required double destinationLat,
-    required double destinationLng,
-    required String name,
+    required List<Map<String, dynamic>> stations,
     String? captainId,
     String? rideId,
-    double geofenceRadius = 200.0,
     bool reset = true,
   }) async {
     if (state.isLoading || state.activeTrip != null) return;
     state = state.copyWith(isLoading: true, clearError: true);
     final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}:::$name";
     try {
+      // Simulate 2 seconds of processing/loading as requested
+      await Future.delayed(const Duration(seconds: 2));
+
       if (!state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
@@ -157,24 +172,56 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       //     tripStatus: "ON_TRIP",
       //   ),
       // );
+            .onLocation()
+            .onAutoArrival()
+            .onServiceStatusChange()
+            .onMotionChange()
+            .initialize(config);
+        state = state.copyWith(isServiceEnabled: true);
+      }
+
+      _syncService.updateConfig(
+        LocationServiceConfig(
+          captainId: captainId,
+          rideId: rideId,
+          tripStatus: "ON_TRIP",
+        ),
+      );
+
+      final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
+      
+      final List<GeofenceInfo> geofenceInfos = stations.map((s) {
+        final name = s['name'] as String;
+        return GeofenceInfo(
+          id: "$tripId:::$name",
+          name: name,
+          latitude: s['lat'] as double,
+          longitude: s['lng'] as double,
+          radius: (s['radius'] as num?)?.toDouble() ?? 380.0,
+        );
+      }).toList();
 
       final newTrip = TripState.newTrip(
         tripId: tripId,
         sourceLat: sourceLat,
         sourceLng: sourceLng,
-        destinationLat: destinationLat,
-        destinationLng: destinationLng,
-        destinationName: name,
-        geofenceRadius: geofenceRadius,
+        geofences: geofenceInfos,
         captainId: captainId,
         rideId: rideId,
       );
 
       state = state.copyWith(isLoading: false, activeTrip: newTrip);
 
+      await _manager.setStationGeofences(geofenceInfos.map((g) => {
+        'id': g.id,
+        'lat': g.latitude,
+        'lng': g.longitude,
+        'radius': g.radius,
+      }).toList());
+
       await _manager.start();
 
-      ref.watch(pluginLogsProvider.notifier).logInfo("Trip started: $tripId");
+      ref.watch(pluginLogsProvider.notifier).logInfo("Trip started with ${geofenceInfos.length} geofences");
     } catch (e) {
       ref
           .watch(pluginLogsProvider.notifier)

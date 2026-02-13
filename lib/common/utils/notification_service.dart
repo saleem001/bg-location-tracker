@@ -36,7 +36,7 @@ class NotificationService {
     }
   }
 
-  Future<void> showGeofenceAlert(String stationName) async {
+  Future<void> showGeofenceAlert(String stationName, int notificationId) async {
     print('[NotificationService] Showing alert for: $stationName');
     // Vibrate
     final hasVibrator = await Vibration.hasVibrator();
@@ -46,7 +46,7 @@ class NotificationService {
 
     // Show Notification
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'geofence_alerts_channel_v2',
+      'geofence_alerts_channel_enter',
       'Geofence Arrival Alerts',
       channelDescription: 'Notifications for entering geofences',
       importance: Importance.max,
@@ -62,9 +62,35 @@ class NotificationService {
     );
 
     await _notificationsPlugin.show(
-      0,
+      notificationId,
       'Geofence Entered',
       'You have arrived at: $stationName',
+      platformChannelSpecifics,
+    );
+  }
+
+  Future<void> showGeofenceExitAlert(String stationName, int notificationId) async {
+    print('[NotificationService] Showing exit alert for: $stationName');
+    
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'geofence_alerts_channel_exit',
+      'Geofence Exit Alerts',
+      channelDescription: 'Notifications for leaving geofences',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
+    
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: DarwinNotificationDetails(),
+    );
+
+    await _notificationsPlugin.show(
+      notificationId + 1000, // Offset to avoid collision with entry notification
+      'Geofence Left',
+      'you have depart from $stationName',
       platformChannelSpecifics,
     );
   }

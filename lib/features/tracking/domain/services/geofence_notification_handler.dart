@@ -17,21 +17,25 @@ class GeofenceNotificationHandler {
     _subscription = _eventStream.listen(_handleEvent);
   }
 
-  Future<void> _handleEvent(LocationEvent event) async {
-    event.maybeWhen(
-      geofenceTriggered: (geofence) async {
-        if (geofence.action == GeofenceAction.enter) {
-          String displayName = geofence.identifier;
+  void _handleEvent(LocationEvent event) async {
+    if (event is GeofenceTriggered) {
+      String displayName = event.geofence.identifier;
+      if (displayName.contains(":::")) {
+        displayName = displayName.split(":::").last;
+      }
 
-          if (displayName.contains(":::")) {
-            displayName = displayName.split(":::").last;
-          }
-
-          await _notificationService.showGeofenceAlert(displayName);
-        }
-      },
-      orElse: () {},
-    );
+      if (event.geofence.action == GeofenceAction.enter) {
+        await _notificationService.showGeofenceAlert(
+          displayName,
+          event.geofence.identifier.hashCode,
+        );
+      } else if (event.geofence.action == GeofenceAction.exit) {
+        await _notificationService.showGeofenceExitAlert(
+          displayName,
+          event.geofence.identifier.hashCode,
+        );
+      }
+    }
   }
 
   void dispose() {

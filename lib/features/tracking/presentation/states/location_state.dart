@@ -1,19 +1,53 @@
 import '../../domain/entities/tracking_event.dart';
 
+enum GeofenceStatus { none, arrived, departed }
+
+class GeofenceInfo {
+  final String id;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final double radius;
+  final bool isInside;
+  final double distanceMeters;
+  final GeofenceStatus status;
+
+  GeofenceInfo({
+    required this.id,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    required this.radius,
+    this.isInside = false,
+    this.distanceMeters = 0.0,
+    this.status = GeofenceStatus.none,
+  });
+
+  GeofenceInfo copyWith({
+    bool? isInside,
+    double? distanceMeters,
+    GeofenceStatus? status,
+  }) =>
+      GeofenceInfo(
+        id: id,
+        name: name,
+        latitude: latitude,
+        longitude: longitude,
+        radius: radius,
+        isInside: isInside ?? this.isInside,
+        distanceMeters: distanceMeters ?? this.distanceMeters,
+        status: status ?? this.status,
+      );
+}
+
 class TripState {
   final String tripId;
   final double sourceLat;
   final double sourceLng;
-  final double destinationLat;
-  final double destinationLng;
-  final String destinationName;
-  final double distanceRemainingMeters;
+  final List<GeofenceInfo> geofences;
+  final double distanceRemainingMeters; // To nearest geofence maybe? Or first one?
   final bool hasArrived;
-  final bool isWithinGeofence;
-  final double geofenceRadius;
   final DateTime? startedAt;
-  final DateTime? arrivedAt;
-  final DateTime? estimatedArrivalTime;
   final String? captainId;
   final String? rideId;
 
@@ -21,16 +55,10 @@ class TripState {
     required this.tripId,
     required this.sourceLat,
     required this.sourceLng,
-    required this.destinationLat,
-    required this.destinationLng,
-    required this.destinationName,
+    required this.geofences,
     this.distanceRemainingMeters = 0.0,
     this.hasArrived = false,
-    this.isWithinGeofence = false,
-    this.geofenceRadius = 200.0,
     this.startedAt,
-    this.arrivedAt,
-    this.estimatedArrivalTime,
     this.captainId,
     this.rideId,
   });
@@ -39,52 +67,49 @@ class TripState {
     required String tripId,
     required double sourceLat,
     required double sourceLng,
-    required double destinationLat,
-    required double destinationLng,
-    required String destinationName,
-    double geofenceRadius = 200.0,
+    required List<GeofenceInfo> geofences,
     String? captainId,
     String? rideId,
-  }) => TripState(
-    tripId: tripId,
-    sourceLat: sourceLat,
-    sourceLng: sourceLng,
-    destinationLat: destinationLat,
-    destinationLng: destinationLng,
-    destinationName: destinationName,
-    geofenceRadius: geofenceRadius,
-    startedAt: DateTime.now(),
-    captainId: captainId,
-    rideId: rideId,
-  );
+  }) =>
+      TripState(
+        tripId: tripId,
+        sourceLat: sourceLat,
+        sourceLng: sourceLng,
+        geofences: geofences,
+        startedAt: DateTime.now(),
+        captainId: captainId,
+        rideId: rideId,
+      );
 
   TripState copyWith({
+    List<GeofenceInfo>? geofences,
     double? distanceRemainingMeters,
     bool? hasArrived,
-    bool? isWithinGeofence,
-    double? geofenceRadius,
-    DateTime? arrivedAt,
-    DateTime? estimatedArrivalTime,
     String? captainId,
     String? rideId,
-  }) => TripState(
-    tripId: tripId,
-    sourceLat: sourceLat,
-    sourceLng: sourceLng,
-    destinationLat: destinationLat,
-    destinationLng: destinationLng,
-    destinationName: destinationName,
-    distanceRemainingMeters:
-        distanceRemainingMeters ?? this.distanceRemainingMeters,
-    hasArrived: hasArrived ?? this.hasArrived,
-    isWithinGeofence: isWithinGeofence ?? this.isWithinGeofence,
-    geofenceRadius: geofenceRadius ?? this.geofenceRadius,
-    startedAt: startedAt,
-    arrivedAt: arrivedAt ?? this.arrivedAt,
-    estimatedArrivalTime: estimatedArrivalTime ?? this.estimatedArrivalTime,
-    captainId: captainId ?? this.captainId,
-    rideId: rideId ?? this.rideId,
-  );
+  }) =>
+      TripState(
+        tripId: tripId,
+        sourceLat: sourceLat,
+        sourceLng: sourceLng,
+        geofences: geofences ?? this.geofences,
+        distanceRemainingMeters:
+            distanceRemainingMeters ?? this.distanceRemainingMeters,
+        hasArrived: hasArrived ?? this.hasArrived,
+        startedAt: startedAt,
+        captainId: captainId ?? this.captainId,
+        rideId: rideId ?? this.rideId,
+      );
+
+  // Helper getters for backward compatibility or UI convenience
+  bool get isWithinAnyGeofence => geofences.any((g) => g.isInside);
+  
+  // For UI that expects a single destination (we'll use the first one as primary for now or logic can be updated)
+  double get destinationLat => geofences.isNotEmpty ? geofences.first.latitude : 0.0;
+  double get destinationLng => geofences.isNotEmpty ? geofences.first.longitude : 0.0;
+  String get destinationName => geofences.isNotEmpty ? geofences.first.name : "None";
+  double get geofenceRadius => geofences.isNotEmpty ? geofences.first.radius : 0.0;
+  bool get isWithinGeofence => isWithinAnyGeofence;
 }
 
 class LocationState {
