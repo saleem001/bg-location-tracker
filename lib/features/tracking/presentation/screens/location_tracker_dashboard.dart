@@ -37,8 +37,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
   final List<StationControllers> _stations = [
     StationControllers(
       initialName: "Stop & Shop",
-      initialLat: "34.742949",
-      initialLng: "72.359715",
+      initialLat: "31.5794984",
+      initialLng: "74.3575637",
     )
   ];
   //saidu chok 34.749598, 72.357232

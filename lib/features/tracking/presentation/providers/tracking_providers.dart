@@ -33,27 +33,14 @@ final locationEventAggregatorProvider = Provider<LocationEventAggregator>((
 ) {
   final manager = ref.watch(backgroundLocationServiceManagerProvider);
 
-  return LocationEventAggregator(
-    locationStream: manager.locationStream,
-    geofenceStream: manager.geofenceStream,
-    motionStream: manager.motionStream,
-    statusStream: manager.statusStream,
-    enabledStream: manager.enabledStream,
-  );
+  return LocationEventAggregator(manager: manager);
 });
 
 final locationStateNotifierProvider =
-    StateNotifierProvider.autoDispose<LocationStateNotifier, LocationAppState>((
-      ref,
-    ) {
+    StateNotifierProvider<LocationStateNotifier, LocationAppState>((ref) {
       final aggregator = ref.watch(locationEventAggregatorProvider);
-
       final notifier = LocationStateNotifier(aggregator.events);
-
-      // ref.onDispose(() {
-      //   notifier.dispose();
-      // });
-
+      ref.onDispose(() => notifier.dispose());
       return notifier;
     });
 

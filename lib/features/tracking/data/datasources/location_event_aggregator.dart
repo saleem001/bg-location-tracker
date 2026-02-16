@@ -10,32 +10,24 @@ import 'location_service_manager.dart';
 import '../../domain/entities/location_service_status.dart';
 import 'package:async/async.dart'; // For StreamGroup
 
+
 class LocationEventAggregator {
-  final Stream<LocationTrackingEvent> locationStream;
-  final Stream<GeofenceEvent> geofenceStream;
-  final Stream<MotionChangeEvent> motionStream;
-  final Stream<LocationServiceStatus> statusStream;
-  final Stream<bool> enabledStream;
+  final BackgroundLocationServiceManager manager;
 
-  const LocationEventAggregator({
-    required this.locationStream,
-    required this.geofenceStream,
-    required this.motionStream,
-    required this.statusStream,
-    required this.enabledStream,
-  });
+  const LocationEventAggregator({required this.manager});
 
-  /// Unified event stream
+  // Unified event stream
   /// //does not need dispose as async* and yield* is used, they auto dispose once done.
   Stream<LocationEvent> get events async* {
-    // Merge all base streams
+    print('[Aggregator] events subscribed');
     yield* StreamGroup.merge<LocationEvent>([
-      locationStream.map(LocationEvent.locationUpdated),
-      geofenceStream.map(LocationEvent.geofenceTriggered),
-      motionStream.map(LocationEvent.motionChanged),
-      statusStream.map(LocationEvent.serviceStatusChanged),
-      enabledStream.map(LocationEvent.serviceEnabledChanged),
+      manager.locationStream.map(LocationEvent.locationUpdated),
+      manager.geofenceStream.map(LocationEvent.geofenceTriggered),
+      manager.motionStream.map(LocationEvent.motionChanged),
+      manager.statusStream.map(LocationEvent.serviceStatusChanged),
+      manager.enabledStream.map(LocationEvent.serviceEnabledChanged),
     ]);
+
 
     // Listen to merged stream asynchronously
     // await for (final event in baseStream) {
@@ -49,5 +41,6 @@ class LocationEventAggregator {
     //   // Always forward the original event
     //   yield event;
     // }
+
   }
 }

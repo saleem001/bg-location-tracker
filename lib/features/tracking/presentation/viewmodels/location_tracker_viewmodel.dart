@@ -143,11 +143,10 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
             .addOnLocation()
-            // .addOnGeofence(stations)
-            // .addOnServiceStatusChange()
-            // .addOnMotionChange()
-            .initialize(config)
-            .then((manager) => manager.start());
+            .addOnGeofence(stations)
+            .addOnServiceStatusChange()
+            .addOnMotionChange()
+            .initialize(config);
         state = state.copyWith(isServiceEnabled: true);
       }
 
@@ -189,7 +188,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       // 1. Stop the background geolocation service
-      await _manager.stop();
+      await _manager.pause();
 
       // 2. Update captain info to IDLE
       // _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
