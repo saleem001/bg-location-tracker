@@ -1,3 +1,4 @@
+import 'package:bg_location_tracker/common/constants/app_constants.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,24 +28,33 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
         print('[HeadlessTask] Geofence: ${geofenceEvent.identifier}');
 
         String displayName = geofenceEvent.identifier;
-        if (displayName.contains(":::")) {
-          displayName = displayName.split(":::").last;
+        if (displayName.contains("_")) {
+          displayName = displayName.split("_").first;
         }
 
         final notifications = NotificationService();
         await notifications.init(requestPermissions: false);
         final notificationId = geofenceEvent.identifier.hashCode;
-        switch(geofenceEvent.action){
-          case 'ENTER':
+        switch (geofenceEvent.action) {
+          case AppConstants.geofenceActionEnter:
             try {
               await transport.sendStationEntryAlert(geofenceEvent.identifier);
-              await notifications.showGeofenceAlert(displayName, notificationId);
+              await notifications.showGeofenceAlert(
+                displayName,
+                notificationId,
+              );
             } catch (e) {
-              await notifications.showGeofenceAlert(displayName, notificationId);
+              await notifications.showGeofenceAlert(
+                displayName,
+                notificationId,
+              );
             }
             break;
-          case 'EXIT':
-            await notifications.showGeofenceExitAlert(displayName, notificationId);
+          case AppConstants.geofenceActionExit:
+            await notifications.showGeofenceExitAlert(
+              displayName,
+              notificationId,
+            );
             break;
         }
         break;

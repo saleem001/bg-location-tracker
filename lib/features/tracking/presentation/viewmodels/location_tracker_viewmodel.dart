@@ -47,6 +47,13 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     if (previous?.motion != next.motion) {
       next.motion?.let((motion) {
+        ref
+            .read(pluginLogsProvider.notifier)
+            .logMotionChange(
+              motion.isMoving,
+              motion.location.latitude,
+              motion.location.longitude,
+            );
         _processLocation(motion.location, motion.isMoving);
       });
     }
@@ -93,7 +100,7 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
 
     // Log location
     ref
-        .watch(pluginLogsProvider.notifier)
+        .read(pluginLogsProvider.notifier)
         .logLocation(
           trackingEvent.latitude,
           trackingEvent.longitude,
@@ -119,6 +126,9 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     state = state.copyWith(
       activeTrip: state.activeTrip!.copyWith(geofences: updatedGeofences),
     );
+
+    // Log the geofence event
+    ref.read(pluginLogsProvider.notifier).logGeofence(identifier, action.name);
   }
 
   void _handleServiceEnableChange(bool isServiceEnabled) {

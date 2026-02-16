@@ -21,8 +21,8 @@ class GeofenceNotificationHandler {
     event.maybeWhen(
       geofenceTriggered: (geofence) async {
         String displayName = geofence.identifier;
-        if (displayName.contains(":::")) {
-          displayName = displayName.split(":::").last;
+        if (displayName.contains("_")) {
+          displayName = displayName.split("_").first;
         }
 
         if (geofence.action == GeofenceAction.enter) {

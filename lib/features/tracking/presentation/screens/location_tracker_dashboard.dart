@@ -21,10 +21,13 @@ class StationControllers {
   final TextEditingController lat;
   final TextEditingController lng;
 
-  StationControllers({String? initialName, String? initialLat, String? initialLng})
-      : name = TextEditingController(text: initialName ?? ""),
-        lat = TextEditingController(text: initialLat ?? ""),
-        lng = TextEditingController(text: initialLng ?? "");
+  StationControllers({
+    String? initialName,
+    String? initialLat,
+    String? initialLng,
+  }) : name = TextEditingController(text: initialName ?? ""),
+       lat = TextEditingController(text: initialLat ?? ""),
+       lng = TextEditingController(text: initialLng ?? "");
 
   void dispose() {
     name.dispose();
@@ -39,8 +42,9 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       initialName: "Stop & Shop",
       initialLat: "31.5794984",
       initialLng: "74.3575637",
-    )
+    ),
   ];
+
   //saidu chok 34.749598, 72.357232
   //DHQ hospital 34.758003, 72.357872
   //grassy ground 34.765879, 72.359467
@@ -159,15 +163,21 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
                       ),
                       if (index > 0 && state.activeTrip == null)
                         IconButton(
-                          icon: const Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () => setState(() => _stations.removeAt(index)),
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            color: Colors.red,
+                          ),
+                          onPressed: () =>
+                              setState(() => _stations.removeAt(index)),
                         ),
                     ],
                   ),
                   TextField(
                     controller: controllers.name,
                     enabled: state.activeTrip == null,
-                    decoration: const InputDecoration(labelText: "Station Name"),
+                    decoration: const InputDecoration(
+                      labelText: "Station Name",
+                    ),
                   ),
                   Row(
                     children: [
@@ -199,7 +209,8 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
           Center(
             child: IconButton(
               icon: const Icon(Icons.add_circle, color: Colors.green, size: 40),
-              onPressed: () => setState(() => _stations.add(StationControllers())),
+              onPressed: () =>
+                  setState(() => _stations.add(StationControllers())),
             ),
           ),
       ],
@@ -277,9 +288,12 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
           return Card(
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 8),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            color: g.isInside ? Colors.green.shade900 : Colors.blueGrey.shade900,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            color: g.isInside
+                ? Colors.green.shade900
+                : Colors.blueGrey.shade900,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -451,17 +465,20 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     final status = await Permission.locationAlways.request();
     if (status.isGranted) {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       final List<Station> stations = _stations.map((s) {
         return Station(
-          id: "trip_${DateTime.now().millisecondsSinceEpoch}",
-          name: s.name.text.trim(),// assuming 'name' is unique
+          id: s.name.text.trim()+"_"+"${double.parse(s.lat.text)}_${double.parse(s.lng.text)}",
+          name: s.name.text.trim(),
           latitude: double.parse(s.lat.text.replaceAll(' ', '')),
           longitude: double.parse(s.lng.text.replaceAll(' ', '')),
-          radius: 300.0,
-          notifyOnEntry: true, // default, can be customized per station
+          radius: 500.0,
+          notifyOnEntry: true,
+          // default, can be customized per station
           notifyOnExit: true, // default, can be customized per station
         );
       }).toList();
@@ -473,10 +490,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       );
 
       // Move camera to user current location
-      _mapController.move(
-        LatLng(position.latitude, position.longitude),
-        15.0,
-      );
+      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
     } else {
       Toast.show("Location Permission Required", duration: Toast.lengthLong);
     }

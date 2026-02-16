@@ -68,6 +68,8 @@ class BackgroundLocationServiceManager {
   }
 
   Future<void> start() async {
+    final state = await bg.BackgroundGeolocation.state;
+    if (state.enabled) return;
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
   }
@@ -75,6 +77,7 @@ class BackgroundLocationServiceManager {
   Future<void> resume() async {
     final state = await bg.BackgroundGeolocation.state;
     if (state.enabled) return;
+
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
   }
