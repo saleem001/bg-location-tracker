@@ -1,69 +1,64 @@
 import 'dart:async';
-import 'dart:ffi';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
-    as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:bg_location_tracker/common/mapper/location_config_mapper.dart';
 import 'package:bg_location_tracker/features/tracking/data/datasources/location_plugin_configs.dart';
-import 'package:bg_location_tracker/features/tracking/domain/entities/location_service_status.dart';
-import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
-import 'package:bg_location_tracker/features/tracking/domain/entities/geofence_event.dart';
 import '../../domain/entities/location_feature.dart';
 import '../../presentation/states/location_state.dart';
 
-/// Manages the background location plugin and exposes mapped domain streams.
-/// Uses a fluent API for configuration and an aggregator for stream access.
+/// Manages the background location plugin and exposes raw plugin event streams.
+/// Controllers are initialized at class level and remain stable throughout the lifecycle.
 class BackgroundLocationServiceManager {
-  //Controller/Granluar streams
   LocationManagerConfig _config = LocationManagerConfigBuilder().build();
-  List<Station> stations = [];
+  List<Station> _stations = [];
 
-  final StreamController<LocationTrackingEvent> _locationController =
-      StreamController<LocationTrackingEvent>.broadcast();
-
-  final StreamController<MotionChangeEvent> _motionController =
-      StreamController<MotionChangeEvent>.broadcast();
-
-  final StreamController<GeofenceEvent> _geofenceController =
-      StreamController<GeofenceEvent>.broadcast();
-
-  final StreamController<LocationServiceStatus> _statusController =
-      StreamController<LocationServiceStatus>.broadcast();
-
+  // Stable controllers - initialized once, live until dispose()
+  final StreamController<bg.Location> _locationController =
+  StreamController<bg.Location>.broadcast();
+  final StreamController<bg.Location> _motionController =
+  StreamController<bg.Location>.broadcast();
+  final StreamController<bg.GeofenceEvent> _geofenceController =
+  StreamController<bg.GeofenceEvent>.broadcast();
+  final StreamController<bg.ProviderChangeEvent> _statusController =
+  StreamController<bg.ProviderChangeEvent>.broadcast();
   final StreamController<bool> _enabledController =
-      StreamController<bool>.broadcast();
+  StreamController<bool>.broadcast();
 
-  //public streams for access
-  Stream<LocationTrackingEvent> get locationStream =>
-      _locationController.stream;
-
-  Stream<MotionChangeEvent> get motionStream => _motionController.stream;
-
-  Stream<GeofenceEvent> get geofenceStream => _geofenceController.stream;
-
-  Stream<LocationServiceStatus> get statusStream => _statusController.stream;
-
+  // Public streams - always available
+  Stream<bg.Location> get locationStream => _locationController.stream;
+  Stream<bg.Location> get motionStream => _motionController.stream;
+  Stream<bg.GeofenceEvent> get geofenceStream => _geofenceController.stream;
+  Stream<bg.ProviderChangeEvent> get statusStream => _statusController.stream;
   Stream<bool> get enabledStream => _enabledController.stream;
 
-  // Registry to track which plugin listeners are currently native-attached.
+  // Track enabled features
   final Set<LocationFeature> _enabledFeatures = {};
+
+  // Callback references for proper removal
+  void Function(bg.Location)? _onLocationCallback;
+  void Function(bg.Location)? _onMotionCallback;
+  void Function(bg.GeofenceEvent)? _onGeofenceCallback;
+  void Function(bg.ProviderChangeEvent)? _onStatusCallback;
+  void Function(bool)? _onEnabledCallback;
 
   BackgroundLocationServiceManager();
 
   // ---------------------------------------------------------------------------
-  // Public Actions
+  // Lifecycle
   // ---------------------------------------------------------------------------
 
   Future<BackgroundLocationServiceManager> initialize(
-    LocationManagerConfig config,
-  ) async {
+      LocationManagerConfig config,
+      ) async {
     _config = config;
     final bgConfig = mapToBgConfig(_config);
-
     await bg.BackgroundGeolocation.ready(bgConfig);
-    //shall listen location at least if initialized is called
+
+    // Optionally listen to location by default
     addOnLocation();
-    //shall start listening immediately once initialized
+
+    // Auto-start
     await start();
+
     return this;
   }
 
@@ -77,7 +72,7 @@ class BackgroundLocationServiceManager {
   Future<void> resume() async {
     final state = await bg.BackgroundGeolocation.state;
     if (state.enabled) return;
-
+    _reattachAllListeners();
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
   }
@@ -90,11 +85,21 @@ class BackgroundLocationServiceManager {
   Future<void> stop() async {
     await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
-    await _clearListeners();
+    bg.BackgroundGeolocation.removeListeners();
+    _onLocationCallback = null;
+    _onMotionCallback = null;
+    _onGeofenceCallback = null;
+    _onStatusCallback = null;
+    _onEnabledCallback = null;
+    // DON'T clear features - keep them for restart
+    // _enabledFeatures.clear(); ← REMOVED
   }
 
-  Future<void> _clearListeners() async {
+  Future<void> dispose() async {
+    await bg.BackgroundGeolocation.changePace(false);
+    await bg.BackgroundGeolocation.stop();
     bg.BackgroundGeolocation.removeListeners();
+    _enabledFeatures.clear();
     await _locationController.close();
     await _motionController.close();
     await _geofenceController.close();
@@ -102,83 +107,174 @@ class BackgroundLocationServiceManager {
     await _enabledController.close();
   }
 
-  Future<void> dispose() async {
-    await _clearListeners();
-    _enabledFeatures.clear();
+  void _reattachAllListeners() {
+    if (_enabledFeatures.contains(LocationFeature.location)) {
+      _listenLocation();
+    }
+    if (_enabledFeatures.contains(LocationFeature.motion)) {
+      _listenMotion();
+    }
+    if (_enabledFeatures.contains(LocationFeature.geofence)) {
+      _listenGeofence();
+    }
+    if (_enabledFeatures.contains(LocationFeature.status)) {
+      _listenStatus();
+    }
+    if (_enabledFeatures.contains(LocationFeature.enable)) {
+      _listenEnabled();
+    }
   }
 
-  // Stream listeners
+  // ---------------------------------------------------------------------------
+  // Location Feature
+  // ---------------------------------------------------------------------------
 
   BackgroundLocationServiceManager addOnLocation() {
     if (_enabledFeatures.add(LocationFeature.location)) {
-      bg.BackgroundGeolocation.onLocation((loc) {
-        _locationController.add(LocationTrackingEventMapper().map(loc));
-      });
+      _listenLocation();
     }
     return this;
   }
 
-  Future<void> removeOnLocation() async {
-    _enabledFeatures.remove(LocationFeature.location);
-    await _locationController.close();
+  void _listenLocation() {
+    _onLocationCallback = (loc) {
+      if (!_locationController.isClosed) {
+        _locationController.add(loc);
+      }
+    };
+    bg.BackgroundGeolocation.onLocation(_onLocationCallback!);
   }
+
+  void removeOnLocation() {
+    if (_enabledFeatures.remove(LocationFeature.location)) {
+      if (_onLocationCallback != null) {
+        bg.BackgroundGeolocation.removeListener(_onLocationCallback!);
+        _onLocationCallback = null;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Motion Feature
+  // ---------------------------------------------------------------------------
 
   BackgroundLocationServiceManager addOnMotionChange() {
     if (_enabledFeatures.add(LocationFeature.motion)) {
-      bg.BackgroundGeolocation.onMotionChange((event) {
-        _motionController.add(MotionChangeEventMapper().map(event));
-      });
+      _listenMotion();
     }
     return this;
   }
 
-  Future<void> removeOnMotionChange() async {
-    _enabledFeatures.remove(LocationFeature.motion);
-    _motionController.close();
+  void _listenMotion() {
+    _onMotionCallback = (loc) {
+      if (!_motionController.isClosed) {
+        _motionController.add(loc);
+      }
+    };
+    bg.BackgroundGeolocation.onMotionChange(_onMotionCallback!);
   }
+
+  void removeOnMotionChange() {
+    if (_enabledFeatures.remove(LocationFeature.motion)) {
+      if (_onMotionCallback != null) {
+        bg.BackgroundGeolocation.removeListener(_onMotionCallback!);
+        _onMotionCallback = null;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Geofence Feature
+  // ---------------------------------------------------------------------------
 
   BackgroundLocationServiceManager addOnGeofence(List<Station> stations) {
     if (_enabledFeatures.add(LocationFeature.geofence)) {
-      setStationGeofences(stations);
-      bg.BackgroundGeolocation.onGeofence((event) {
-        _geofenceController.add(GeofenceEventMapper().map(event));
-      });
+      _stations = stations;
+      _setStationGeofences(_stations);
+      _listenGeofence();
     }
     return this;
   }
 
-  Future<void> removeOnGeofence() async {
-    _enabledFeatures.remove(LocationFeature.geofence);
-    _geofenceController.close();
+  void _listenGeofence() {
+    _onGeofenceCallback = (geofence) {
+      if (!_geofenceController.isClosed) {
+        _geofenceController.add(geofence);
+      }
+    };
+    bg.BackgroundGeolocation.onGeofence(_onGeofenceCallback!);
   }
+
+  void removeOnGeofence() {
+    if (_enabledFeatures.remove(LocationFeature.geofence)) {
+      if (_onGeofenceCallback != null) {
+        bg.BackgroundGeolocation.removeListener(_onGeofenceCallback!);
+        _onGeofenceCallback = null;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Service Status Feature
+  // ---------------------------------------------------------------------------
 
   BackgroundLocationServiceManager addOnServiceStatusChange() {
     if (_enabledFeatures.add(LocationFeature.status)) {
-      bg.BackgroundGeolocation.onProviderChange((event) {
-        _statusController.add(LocationServiceStatus.map(event));
-      });
+      _listenStatus();
     }
     return this;
   }
 
-  Future<void> removeOnServiceStatusChange() async {
-    _enabledFeatures.remove(LocationFeature.status);
-    _statusController.close();
+  void _listenStatus() {
+    _onStatusCallback = (status) {
+      if (!_statusController.isClosed) {
+        _statusController.add(status);
+      }
+    };
+    bg.BackgroundGeolocation.onProviderChange(_onStatusCallback!);
   }
+
+  void removeOnServiceStatusChange() {
+    if (_enabledFeatures.remove(LocationFeature.status)) {
+      if (_onStatusCallback != null) {
+        bg.BackgroundGeolocation.removeListener(_onStatusCallback!);
+        _onStatusCallback = null;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Enabled Change Feature
+  // ---------------------------------------------------------------------------
 
   BackgroundLocationServiceManager addOnEnableChange() {
     if (_enabledFeatures.add(LocationFeature.enable)) {
-      bg.BackgroundGeolocation.onEnabledChange((enabled) {
-        _enabledController.add(enabled);
-      });
+      _listenEnabled();
     }
     return this;
   }
 
-  Future<void> removeOnEnableChange() async {
-    _enabledFeatures.remove(LocationFeature.enable);
-    _enabledController.close();
+  void _listenEnabled() {
+    _onEnabledCallback = (enabled) {
+      if (!_enabledController.isClosed) {
+        _enabledController.add(enabled);
+      }
+    };
+    bg.BackgroundGeolocation.onEnabledChange(_onEnabledCallback!);
   }
+
+  void removeOnEnableChange() {
+    if (_enabledFeatures.remove(LocationFeature.enable)) {
+      if (_onEnabledCallback != null) {
+        bg.BackgroundGeolocation.removeListener(_onEnabledCallback!);
+        _onEnabledCallback = null;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Configuration & Geofence Management
+  // ---------------------------------------------------------------------------
 
   Future<void> updateConfigs(LocationManagerConfig config) async {
     _config = config;
@@ -186,13 +282,10 @@ class BackgroundLocationServiceManager {
     await bg.BackgroundGeolocation.setConfig(bgConfig);
   }
 
-  LocationManagerConfig getConfigs() {
-    return _config;
-  }
+  LocationManagerConfig getConfigs() => _config;
 
-  Future<void> setStationGeofences(List<Station> stations) async {
+  Future<void> _setStationGeofences(List<Station> stations) async {
     await bg.BackgroundGeolocation.removeGeofences();
-    stations = stations;
     for (var station in stations) {
       await bg.BackgroundGeolocation.addGeofence(
         bg.Geofence(
@@ -207,22 +300,21 @@ class BackgroundLocationServiceManager {
     }
   }
 
-  Future<LocationTrackingEvent> getCurrentPosition() async {
-    final location = await bg.BackgroundGeolocation.getCurrentPosition(
+  Future<bg.Location> getCurrentPosition() async {
+    return await bg.BackgroundGeolocation.getCurrentPosition(
       persist: false,
       samples: 1,
     );
-    return LocationTrackingEventMapper().map(location);
   }
 
   Future<void> addStationGeofence(
-    String id,
-    double lat,
-    double lng,
-    double rad, [
-    bool onEntry = true,
-    bool onExit = true,
-  ]) {
+      String id,
+      double lat,
+      double lng,
+      double rad, [
+        bool onEntry = true,
+        bool onExit = true,
+      ]) {
     return bg.BackgroundGeolocation.addGeofence(
       bg.Geofence(
         identifier: id,
@@ -238,7 +330,6 @@ class BackgroundLocationServiceManager {
   Future<void> removeStationGeofence(String id) =>
       bg.BackgroundGeolocation.removeGeofence(id);
 
-  bool isFeatureEnabled(LocationFeature feature) {
-    return _enabledFeatures.contains(feature);
-  }
+  bool isFeatureEnabled(LocationFeature feature) =>
+      _enabledFeatures.contains(feature);
 }

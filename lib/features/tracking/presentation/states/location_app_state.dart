@@ -13,7 +13,7 @@ abstract class LocationAppState with _$LocationAppState {
     LocationTrackingEvent? location,
     MotionChangeEvent? motion,
     GeofenceEvent? geofence,
-    LocationServiceStatus? serviceStatus,
+    LocationServiceStatusEvent? serviceStatus,
   }) = _LocationAppState;
 
   factory LocationAppState.initial() => const LocationAppState();

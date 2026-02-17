@@ -8,39 +8,39 @@ import '../../domain/entities/tracking_event.dart';
 import '../../domain/entities/geofence_event.dart';
 import 'location_service_manager.dart';
 import '../../domain/entities/location_service_status.dart';
-import 'package:async/async.dart'; // For StreamGroup
-
+import 'package:async/async.dart';
 
 class LocationEventAggregator {
   final BackgroundLocationServiceManager manager;
 
-  const LocationEventAggregator({required this.manager});
+  final LocationTrackingEventMapper _locationMapper =
+      LocationTrackingEventMapper();
+  final MotionChangeEventMapper _motionMapper = MotionChangeEventMapper();
+  final GeofenceEventMapper _geofenceMapper = GeofenceEventMapper();
+  final LocationServiceStatusMapper _statusMapper =
+      LocationServiceStatusMapper();
+
+  LocationEventAggregator({required this.manager});
 
   // Unified event stream
-  /// //does not need dispose as async* and yield* is used, they auto dispose once done.
+  ///does not need dispose as async* and yield* is used, they auto dispose once done.
   Stream<LocationEvent> get events async* {
-    print('[Aggregator] events subscribed');
     yield* StreamGroup.merge<LocationEvent>([
-      manager.locationStream.map(LocationEvent.locationUpdated),
-      manager.geofenceStream.map(LocationEvent.geofenceTriggered),
-      manager.motionStream.map(LocationEvent.motionChanged),
-      manager.statusStream.map(LocationEvent.serviceStatusChanged),
-      manager.enabledStream.map(LocationEvent.serviceEnabledChanged),
+      manager.locationStream.map(
+        (loc) => LocationEvent.locationUpdated(_locationMapper.map(loc)),
+      ),
+      manager.geofenceStream.map(
+        (event) => LocationEvent.geofenceTriggered(_geofenceMapper.map(event)),
+      ),
+      manager.motionStream.map(
+        (event) => LocationEvent.motionChanged(_motionMapper.map(event)),
+      ),
+      manager.statusStream.map(
+        (event) => LocationEvent.serviceStatusChanged(_statusMapper.map(event)),
+      ),
+      manager.enabledStream.map(
+        (enabled) => LocationEvent.serviceEnabledChanged(enabled),
+      ),
     ]);
-
-
-    // Listen to merged stream asynchronously
-    // await for (final event in baseStream) {
-    //   // Example of injecting custom logic
-    //   if (event is _ServiceEnabledChanged && !event.isEnabled) {
-    //     // Emit additional cleanup events when service is disabled
-    //     yield LocationEvent.serviceDisabled();
-    //     yield LocationEvent.clearLocationHistory();
-    //   }
-    //
-    //   // Always forward the original event
-    //   yield event;
-    // }
-
   }
 }

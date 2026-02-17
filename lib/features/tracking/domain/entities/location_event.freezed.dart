@@ -131,7 +131,7 @@ return serviceEnabledChanged(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( LocationTrackingEvent location)?  locationUpdated,TResult Function( GeofenceEvent geofence)?  geofenceTriggered,TResult Function( MotionChangeEvent motion)?  motionChanged,TResult Function( LocationServiceStatus status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( LocationTrackingEvent location)?  locationUpdated,TResult Function( GeofenceEvent geofence)?  geofenceTriggered,TResult Function( MotionChangeEvent motion)?  motionChanged,TResult Function( LocationServiceStatusEvent status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LocationUpdated() when locationUpdated != null:
 return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
@@ -156,7 +156,7 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( LocationTrackingEvent location)  locationUpdated,required TResult Function( GeofenceEvent geofence)  geofenceTriggered,required TResult Function( MotionChangeEvent motion)  motionChanged,required TResult Function( LocationServiceStatus status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( LocationTrackingEvent location)  locationUpdated,required TResult Function( GeofenceEvent geofence)  geofenceTriggered,required TResult Function( MotionChangeEvent motion)  motionChanged,required TResult Function( LocationServiceStatusEvent status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
 case _LocationUpdated():
 return locationUpdated(_that.location);case _GeofenceTriggered():
@@ -180,7 +180,7 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( LocationTrackingEvent location)?  locationUpdated,TResult? Function( GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( MotionChangeEvent motion)?  motionChanged,TResult? Function( LocationServiceStatus status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( LocationTrackingEvent location)?  locationUpdated,TResult? Function( GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( MotionChangeEvent motion)?  motionChanged,TResult? Function( LocationServiceStatusEvent status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
 case _LocationUpdated() when locationUpdated != null:
 return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
@@ -400,7 +400,7 @@ class _ServiceStatusChanged implements LocationEvent {
   const _ServiceStatusChanged(this.status);
   
 
- final  LocationServiceStatus status;
+ final  LocationServiceStatusEvent status;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -432,7 +432,7 @@ abstract mixin class _$ServiceStatusChangedCopyWith<$Res> implements $LocationEv
   factory _$ServiceStatusChangedCopyWith(_ServiceStatusChanged value, $Res Function(_ServiceStatusChanged) _then) = __$ServiceStatusChangedCopyWithImpl;
 @useResult
 $Res call({
- LocationServiceStatus status
+ LocationServiceStatusEvent status
 });
 
 
@@ -452,7 +452,7 @@ class __$ServiceStatusChangedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
   return _then(_ServiceStatusChanged(
 null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as LocationServiceStatus,
+as LocationServiceStatusEvent,
   ));
 }
 

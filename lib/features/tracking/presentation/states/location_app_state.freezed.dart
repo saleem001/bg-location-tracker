@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LocationAppState {
 
- LocationTrackingEvent? get location; MotionChangeEvent? get motion; GeofenceEvent? get geofence; LocationServiceStatus? get serviceStatus;// Service & motion
+ LocationTrackingEvent? get location; MotionChangeEvent? get motion; GeofenceEvent? get geofence; LocationServiceStatusEvent? get serviceStatus;// Service & motion
  bool get isServiceEnabled; bool get isStationary; bool get isMoving; bool get isLoading;// Trip info
  TripState? get activeTrip;// Current location tracking
  LocationTrackingEvent? get currentLocation; List<LocationTrackingEvent> get locationHistory; double get speedKmh;// Misc
@@ -49,7 +49,7 @@ abstract mixin class $LocationAppStateCopyWith<$Res>  {
   factory $LocationAppStateCopyWith(LocationAppState value, $Res Function(LocationAppState) _then) = _$LocationAppStateCopyWithImpl;
 @useResult
 $Res call({
- LocationTrackingEvent? location, MotionChangeEvent? motion, GeofenceEvent? geofence, LocationServiceStatus? serviceStatus, bool isServiceEnabled, bool isStationary, bool isMoving, bool isLoading, TripState? activeTrip, LocationTrackingEvent? currentLocation, List<LocationTrackingEvent> locationHistory, double speedKmh, LocationTrackingEvent? pendingDestination, String? lastActivity, String? error
+ LocationTrackingEvent? location, MotionChangeEvent? motion, GeofenceEvent? geofence, LocationServiceStatusEvent? serviceStatus, bool isServiceEnabled, bool isStationary, bool isMoving, bool isLoading, TripState? activeTrip, LocationTrackingEvent? currentLocation, List<LocationTrackingEvent> locationHistory, double speedKmh, LocationTrackingEvent? pendingDestination, String? lastActivity, String? error
 });
 
 
@@ -72,7 +72,7 @@ location: freezed == location ? _self.location : location // ignore: cast_nullab
 as LocationTrackingEvent?,motion: freezed == motion ? _self.motion : motion // ignore: cast_nullable_to_non_nullable
 as MotionChangeEvent?,geofence: freezed == geofence ? _self.geofence : geofence // ignore: cast_nullable_to_non_nullable
 as GeofenceEvent?,serviceStatus: freezed == serviceStatus ? _self.serviceStatus : serviceStatus // ignore: cast_nullable_to_non_nullable
-as LocationServiceStatus?,isServiceEnabled: null == isServiceEnabled ? _self.isServiceEnabled : isServiceEnabled // ignore: cast_nullable_to_non_nullable
+as LocationServiceStatusEvent?,isServiceEnabled: null == isServiceEnabled ? _self.isServiceEnabled : isServiceEnabled // ignore: cast_nullable_to_non_nullable
 as bool,isStationary: null == isStationary ? _self.isStationary : isStationary // ignore: cast_nullable_to_non_nullable
 as bool,isMoving: null == isMoving ? _self.isMoving : isMoving // ignore: cast_nullable_to_non_nullable
 as bool,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
@@ -168,7 +168,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatus? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatusEvent? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LocationAppState() when $default != null:
 return $default(_that.location,_that.motion,_that.geofence,_that.serviceStatus,_that.isServiceEnabled,_that.isStationary,_that.isMoving,_that.isLoading,_that.activeTrip,_that.currentLocation,_that.locationHistory,_that.speedKmh,_that.pendingDestination,_that.lastActivity,_that.error);case _:
@@ -189,7 +189,7 @@ return $default(_that.location,_that.motion,_that.geofence,_that.serviceStatus,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatus? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatusEvent? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)  $default,) {final _that = this;
 switch (_that) {
 case _LocationAppState():
 return $default(_that.location,_that.motion,_that.geofence,_that.serviceStatus,_that.isServiceEnabled,_that.isStationary,_that.isMoving,_that.isLoading,_that.activeTrip,_that.currentLocation,_that.locationHistory,_that.speedKmh,_that.pendingDestination,_that.lastActivity,_that.error);case _:
@@ -209,7 +209,7 @@ return $default(_that.location,_that.motion,_that.geofence,_that.serviceStatus,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatus? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocationTrackingEvent? location,  MotionChangeEvent? motion,  GeofenceEvent? geofence,  LocationServiceStatusEvent? serviceStatus,  bool isServiceEnabled,  bool isStationary,  bool isMoving,  bool isLoading,  TripState? activeTrip,  LocationTrackingEvent? currentLocation,  List<LocationTrackingEvent> locationHistory,  double speedKmh,  LocationTrackingEvent? pendingDestination,  String? lastActivity,  String? error)?  $default,) {final _that = this;
 switch (_that) {
 case _LocationAppState() when $default != null:
 return $default(_that.location,_that.motion,_that.geofence,_that.serviceStatus,_that.isServiceEnabled,_that.isStationary,_that.isMoving,_that.isLoading,_that.activeTrip,_that.currentLocation,_that.locationHistory,_that.speedKmh,_that.pendingDestination,_that.lastActivity,_that.error);case _:
@@ -230,7 +230,7 @@ class _LocationAppState implements LocationAppState {
 @override final  LocationTrackingEvent? location;
 @override final  MotionChangeEvent? motion;
 @override final  GeofenceEvent? geofence;
-@override final  LocationServiceStatus? serviceStatus;
+@override final  LocationServiceStatusEvent? serviceStatus;
 // Service & motion
 @override@JsonKey() final  bool isServiceEnabled;
 @override@JsonKey() final  bool isStationary;
@@ -283,7 +283,7 @@ abstract mixin class _$LocationAppStateCopyWith<$Res> implements $LocationAppSta
   factory _$LocationAppStateCopyWith(_LocationAppState value, $Res Function(_LocationAppState) _then) = __$LocationAppStateCopyWithImpl;
 @override @useResult
 $Res call({
- LocationTrackingEvent? location, MotionChangeEvent? motion, GeofenceEvent? geofence, LocationServiceStatus? serviceStatus, bool isServiceEnabled, bool isStationary, bool isMoving, bool isLoading, TripState? activeTrip, LocationTrackingEvent? currentLocation, List<LocationTrackingEvent> locationHistory, double speedKmh, LocationTrackingEvent? pendingDestination, String? lastActivity, String? error
+ LocationTrackingEvent? location, MotionChangeEvent? motion, GeofenceEvent? geofence, LocationServiceStatusEvent? serviceStatus, bool isServiceEnabled, bool isStationary, bool isMoving, bool isLoading, TripState? activeTrip, LocationTrackingEvent? currentLocation, List<LocationTrackingEvent> locationHistory, double speedKmh, LocationTrackingEvent? pendingDestination, String? lastActivity, String? error
 });
 
 
@@ -306,7 +306,7 @@ location: freezed == location ? _self.location : location // ignore: cast_nullab
 as LocationTrackingEvent?,motion: freezed == motion ? _self.motion : motion // ignore: cast_nullable_to_non_nullable
 as MotionChangeEvent?,geofence: freezed == geofence ? _self.geofence : geofence // ignore: cast_nullable_to_non_nullable
 as GeofenceEvent?,serviceStatus: freezed == serviceStatus ? _self.serviceStatus : serviceStatus // ignore: cast_nullable_to_non_nullable
-as LocationServiceStatus?,isServiceEnabled: null == isServiceEnabled ? _self.isServiceEnabled : isServiceEnabled // ignore: cast_nullable_to_non_nullable
+as LocationServiceStatusEvent?,isServiceEnabled: null == isServiceEnabled ? _self.isServiceEnabled : isServiceEnabled // ignore: cast_nullable_to_non_nullable
 as bool,isStationary: null == isStationary ? _self.isStationary : isStationary // ignore: cast_nullable_to_non_nullable
 as bool,isMoving: null == isMoving ? _self.isMoving : isMoving // ignore: cast_nullable_to_non_nullable
 as bool,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
