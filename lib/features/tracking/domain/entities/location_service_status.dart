@@ -1,6 +1,8 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 
+import '../../../../common/mapper/data_mapper.dart';
+
 enum LocationPermissionStatus {
   //iOS only
   notRequested,
@@ -57,17 +59,33 @@ enum LocationAccuracy {
   bool get isPrecise => this == LocationAccuracy.precise;
 }
 
-class LocationServiceStatus {
+class LocationServiceStatusEvent {
   final bool deviceLocationEnabled;
   final LocationPermissionStatus locationPermissionStatus;
   final LocationAccuracy locationAccuracy;
   final bool gpsEnabled;
   final bool networkEnabled;
 
-  LocationServiceStatus.map(bg.ProviderChangeEvent event)
-    : deviceLocationEnabled = event.enabled,
-      locationPermissionStatus = LocationPermissionStatus.fromInt(event.status),
-      locationAccuracy = LocationAccuracy.fromInt(event.accuracyAuthorization),
-      gpsEnabled = event.gps,
-      networkEnabled = event.network;
+  LocationServiceStatusEvent({
+    required this.deviceLocationEnabled,
+    required this.locationPermissionStatus,
+    required this.locationAccuracy,
+    required this.gpsEnabled,
+    required this.networkEnabled,
+  });
+}
+
+class LocationServiceStatusMapper
+    implements DataMapper<LocationServiceStatusEvent> {
+  @override
+  LocationServiceStatusEvent map(dynamic data) {
+    final event = data as bg.ProviderChangeEvent;
+    return LocationServiceStatusEvent(
+      deviceLocationEnabled: event.enabled,
+      locationPermissionStatus: LocationPermissionStatus.fromInt(event.status),
+      locationAccuracy: LocationAccuracy.fromInt(event.accuracyAuthorization),
+      gpsEnabled: event.gps,
+      networkEnabled: event.network,
+    );
+  }
 }

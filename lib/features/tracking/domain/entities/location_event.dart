@@ -18,7 +18,7 @@ class LocationEvent with _$LocationEvent {
       _MotionChanged;
 
   const factory LocationEvent.serviceStatusChanged(
-    LocationServiceStatus status,
+    LocationServiceStatusEvent status,
   ) = _ServiceStatusChanged;
 
   const factory LocationEvent.serviceEnabledChanged(bool isEnabled) =
