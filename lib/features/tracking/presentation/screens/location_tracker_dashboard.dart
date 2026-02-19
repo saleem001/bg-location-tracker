@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:toast/toast.dart';
 import '../states/location_state.dart';
 import '../providers/tracking_providers.dart';
 import '../../../../log_viewer.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 
 class LocationDashboard extends ConsumerStatefulWidget {
   const LocationDashboard({super.key});
@@ -44,11 +39,6 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       initialLng: "72.359715",
     ),
   ];
-
-  //saidu chok 34.749598, 72.357232
-  //DHQ hospital 34.758003, 72.357872
-  //grassy ground 34.765879, 72.359467
-  final MapController _mapController = MapController();
 
   @override
   void dispose() {
@@ -89,7 +79,6 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             const SizedBox(height: 16),
             _buildTripInfo(state),
             const SizedBox(height: 16),
-            SizedBox(height: 300, child: _buildMap(state)),
           ],
         ),
       ),
@@ -371,72 +360,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     );
   }
 
-  Widget _buildMap(LocationState state) {
-    final currentLatLng = state.currentLocation != null
-        ? LatLng(
-            state.currentLocation!.latitude,
-            state.currentLocation!.longitude,
-          )
-        : const LatLng(
-            34.740674,
-            72.361101,
-          ); // Fallback to a default if no location yet
 
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(initialCenter: currentLatLng, initialZoom: 15),
-      children: [
-        TileLayer(
-          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          userAgentPackageName: 'com.example.track_me_test_project',
-        ),
-        if (state.activeTrip != null) ...[
-          CircleLayer(
-            circles: state.activeTrip!.geofences
-                .map(
-                  (g) => CircleMarker(
-                    point: LatLng(g.latitude, g.longitude),
-                    radius: g.radius,
-                    useRadiusInMeter: true,
-                    color: g.isInside
-                        ? Colors.green.withOpacity(0.2)
-                        : Colors.cyan.withOpacity(0.2),
-                    borderColor: g.isInside ? Colors.green : Colors.cyan,
-                    borderStrokeWidth: 2,
-                  ),
-                )
-                .toList(),
-          ),
-          MarkerLayer(
-            markers: state.activeTrip!.geofences
-                .map(
-                  (g) => Marker(
-                    point: LatLng(g.latitude, g.longitude),
-                    width: 40,
-                    height: 40,
-                    child: Icon(
-                      Icons.location_on,
-                      color: g.isInside ? Colors.greenAccent : Colors.redAccent,
-                      size: 40,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: currentLatLng,
-              width: 40,
-              height: 40,
-              child: const Icon(Icons.navigation, color: Colors.cyan, size: 40),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   Future<void> _handleStartTrip(dynamic viewModel) async {
     // Validation
@@ -445,30 +369,16 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       if (station.name.text.trim().isEmpty ||
           station.lat.text.trim().isEmpty ||
           station.lng.text.trim().isEmpty) {
-        Toast.show(
-          "Please fill all fields for Station ${i + 1}",
-          duration: Toast.lengthLong,
-        );
         return;
       }
 
       if (double.tryParse(station.lat.text) == null ||
           double.tryParse(station.lng.text) == null) {
-        Toast.show(
-          "Invalid Lat/Lng for Station ${i + 1}",
-          duration: Toast.lengthLong,
-        );
         return;
       }
     }
 
-    final status = await Permission.locationAlways.request();
-    if (status.isGranted) {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
+      final position = await viewModel.getCurrentPosition();
 
       final List<Station> stations = _stations.map((s) {
         return Station(
@@ -489,10 +399,5 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
         stations: stations,
       );
 
-      // Move camera to user current location
-      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
-    } else {
-      Toast.show("Location Permission Required", duration: Toast.lengthLong);
-    }
   }
 }

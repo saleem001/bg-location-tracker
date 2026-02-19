@@ -214,13 +214,17 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         speedKmh: 0.0,
       );
 
-      ref.watch(pluginLogsProvider.notifier).logInfo("Trip stopped");
+      ref.read(pluginLogsProvider.notifier).logInfo("Trip stopped");
     } catch (e) {
       ref
-          .watch(pluginLogsProvider.notifier)
+          .read(pluginLogsProvider.notifier)
           .logError("Stop Trip Failed", error: e);
       state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
     }
+  }
+
+  Future<LocationTrackingEvent> getCurrentPosition() async {
+    return await _manager.getCurrentPosition();
   }
 
   LocationManagerConfig _buildAdvancedConfig({required bool reset}) {

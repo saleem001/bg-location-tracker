@@ -1,6 +1,4 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:vibration/vibration.dart';
-
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -40,11 +38,6 @@ class NotificationService {
 
   Future<void> showGeofenceAlert(String stationName, int notificationId) async {
     print('[NotificationService] Showing alert for: $stationName');
-    // Vibrate
-    final hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator == true) {
-      Vibration.vibrate(duration: 1000); // 1 second vibration
-    }
 
     // Show Notification
     const AndroidNotificationDetails androidPlatformChannelSpecifics =

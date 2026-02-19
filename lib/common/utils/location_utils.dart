@@ -1,4 +1,4 @@
-import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 
 class LocationUtils {
   /// Calculates the straight-line distance between two points in meters.
@@ -8,7 +8,12 @@ class LocationUtils {
     double destLat,
     double destLng,
   ) {
-    return Geolocator.distanceBetween(currentLat, currentLng, destLat, destLng);
+    const Distance distance = Distance();
+    return distance.as(
+      LengthUnit.Meter,
+      LatLng(currentLat, currentLng),
+      LatLng(destLat, destLng),
+    );
   }
 
   /// Using the famout veloctiy = distance / time formulat to calculate the ETA
