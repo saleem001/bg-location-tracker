@@ -1,21 +1,16 @@
 import 'package:bg_location_tracker/common/constants/app_constants.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../presentation/providers/tracking_providers.dart';
+import 'socket_tracking_transport.dart';
 import '../../../../common/utils/notification_service.dart';
 
 @pragma('vm:entry-point')
 void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
   print('[HeadlessTask] Event received: ${event.name}');
 
-  // Create a temporary ProviderContainer to access our ServiceManager
-  final container = ProviderContainer();
+  final transport = SocketTrackingTransport();
 
   try {
-    final transport = container.read(trackingTransportProvider);
-
     switch (event.name) {
       case bg.Event.LOCATION:
       case bg.Event.MOTIONCHANGE:
@@ -68,7 +63,5 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
     }
   } catch (e, stack) {
     print('[HeadlessTask] Error: $e\n$stack');
-  } finally {
-    container.dispose();
   }
 }

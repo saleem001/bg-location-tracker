@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../states/location_state.dart';
-import '../providers/tracking_providers.dart';
+import '../viewmodels/location_tracker_viewmodel.dart';
 import '../../../../log_viewer.dart';
 
-class LocationDashboard extends ConsumerStatefulWidget {
+class LocationDashboard extends StatefulWidget {
   const LocationDashboard({super.key});
 
   @override
-  ConsumerState<LocationDashboard> createState() => _LocationDashboardState();
+  State<LocationDashboard> createState() => _LocationDashboardState();
 }
 
 class StationControllers {
@@ -31,7 +30,7 @@ class StationControllers {
   }
 }
 
-class _LocationDashboardState extends ConsumerState<LocationDashboard> {
+class _LocationDashboardState extends State<LocationDashboard> {
   final List<StationControllers> _stations = [
     StationControllers(
       initialName: "Stop & Shop",
@@ -40,8 +39,23 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     ),
   ];
 
+  final LocationTrackerViewModel _viewModel = LocationTrackerViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel.addListener(_onViewModelChanged);
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
     for (var station in _stations) {
       station.dispose();
     }
@@ -50,8 +64,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(locationTrackerViewModelProvider);
-    final viewModel = ref.read(locationTrackerViewModelProvider.notifier);
+    final state = _viewModel.state;
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +88,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
             const SizedBox(height: 16),
             _buildTripInputs(state),
             const SizedBox(height: 16),
-            _buildActionButtons(state, viewModel),
+            _buildActionButtons(state, _viewModel),
             const SizedBox(height: 16),
             _buildTripInfo(state),
             const SizedBox(height: 16),
@@ -206,7 +219,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     );
   }
 
-  Widget _buildActionButtons(LocationState state, dynamic viewModel) {
+  Widget _buildActionButtons(LocationState state, LocationTrackerViewModel viewModel) {
     return Row(
       children: [
         Expanded(
@@ -360,9 +373,7 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
     );
   }
 
-
-
-  Future<void> _handleStartTrip(dynamic viewModel) async {
+  Future<void> _handleStartTrip(LocationTrackerViewModel viewModel) async {
     // Validation
     for (int i = 0; i < _stations.length; i++) {
       final station = _stations[i];
@@ -378,26 +389,24 @@ class _LocationDashboardState extends ConsumerState<LocationDashboard> {
       }
     }
 
-      final position = await viewModel.getCurrentPosition();
+    final position = await viewModel.getCurrentPosition();
 
-      final List<Station> stations = _stations.map((s) {
-        return Station(
-          id: s.name.text.trim()+"_"+"${double.parse(s.lat.text)}_${double.parse(s.lng.text)}",
-          name: s.name.text.trim(),
-          latitude: double.parse(s.lat.text.replaceAll(' ', '')),
-          longitude: double.parse(s.lng.text.replaceAll(' ', '')),
-          radius: 500.0,
-          notifyOnEntry: true,
-          // default, can be customized per station
-          notifyOnExit: true, // default, can be customized per station
-        );
-      }).toList();
-
-      await viewModel.startTrip(
-        sourceLat: position.latitude,
-        sourceLng: position.longitude,
-        stations: stations,
+    final List<Station> stations = _stations.map((s) {
+      return Station(
+        id: s.name.text.trim()+"_"+"${double.parse(s.lat.text)}_${double.parse(s.lng.text)}",
+        name: s.name.text.trim(),
+        latitude: double.parse(s.lat.text.replaceAll(' ', '')),
+        longitude: double.parse(s.lng.text.replaceAll(' ', '')),
+        radius: 500.0,
+        notifyOnEntry: true,
+        notifyOnExit: true,
       );
+    }).toList();
 
+    await viewModel.startTrip(
+      sourceLat: position.latitude,
+      sourceLng: position.longitude,
+      stations: stations,
+    );
   }
 }

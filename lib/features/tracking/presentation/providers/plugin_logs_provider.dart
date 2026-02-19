@@ -1,14 +1,14 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:bg_location_tracker/common/utils/plugin_logs.dart';
 
 /// Provider for managing plugin logs
-final pluginLogsProvider =
-    StateNotifierProvider<PluginLogsNotifier, PluginLogsState>((ref) {
-      return PluginLogsNotifier();
-    });
+class PluginLogsNotifier extends ChangeNotifier {
+  static final PluginLogsNotifier _instance = PluginLogsNotifier._internal();
+  factory PluginLogsNotifier() => _instance;
+  PluginLogsNotifier._internal();
 
-class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
-  PluginLogsNotifier() : super(PluginLogsState());
+  PluginLogsState _state = PluginLogsState();
+  PluginLogsState get state => _state;
 
   /// Add a location update log
   void logLocation(double lat, double lng, double speed, double odometer) {
@@ -23,7 +23,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
         'odometer': '${odometer.toStringAsFixed(2)} m',
       },
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add a motion change log
@@ -34,7 +35,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
       message: 'Motion Change: ${isMoving ? "MOVING" : "STATIONARY"}',
       data: {'isMoving': isMoving, 'latitude': lat, 'longitude': lng},
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add a geofence event log
@@ -45,7 +47,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
       message: 'Geofence $action',
       data: {'identifier': identifier, 'action': action},
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add a provider change log
@@ -68,7 +71,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
         'network': network,
       },
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add an activity change log
@@ -79,7 +83,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
       message: 'Activity: $activity',
       data: {'activity': activity, 'confidence': '$confidence%'},
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add an error log
@@ -90,7 +95,8 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
       message: message,
       data: error != null ? {'error': error.toString()} : null,
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Add an info log
@@ -101,16 +107,19 @@ class PluginLogsNotifier extends StateNotifier<PluginLogsState> {
       message: message,
       data: data,
     );
-    state = state.addLog(entry);
+    _state = _state.addLog(entry);
+    notifyListeners();
   }
 
   /// Clear all logs
   void clearLogs() {
-    state = state.clear();
+    _state = _state.clear();
+    notifyListeners();
   }
 
   /// Set maximum number of logs to keep
   void setMaxLogs(int max) {
-    state = state.copyWith(maxLogs: max);
+    _state = _state.copyWith(maxLogs: max);
+    notifyListeners();
   }
 }

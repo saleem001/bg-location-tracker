@@ -1,26 +1,32 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
-
 import 'geofence_event.dart';
 import 'location_service_status.dart';
 
-part 'location_event.freezed.dart';
+sealed class LocationEvent {
+  const LocationEvent();
+}
 
-@freezed
-class LocationEvent with _$LocationEvent {
-  const factory LocationEvent.locationUpdated(LocationTrackingEvent location) =
-      _LocationUpdated;
+class LocationUpdated extends LocationEvent {
+  final LocationTrackingEvent location;
+  const LocationUpdated(this.location);
+}
 
-  const factory LocationEvent.geofenceTriggered(GeofenceEvent geofence) =
-      _GeofenceTriggered;
+class GeofenceTriggered extends LocationEvent {
+  final GeofenceEvent geofence;
+  const GeofenceTriggered(this.geofence);
+}
 
-  const factory LocationEvent.motionChanged(MotionChangeEvent motion) =
-      _MotionChanged;
+class MotionChanged extends LocationEvent {
+  final MotionChangeEvent motion;
+  const MotionChanged(this.motion);
+}
 
-  const factory LocationEvent.serviceStatusChanged(
-    LocationServiceStatus status,
-  ) = _ServiceStatusChanged;
+class ServiceStatusChanged extends LocationEvent {
+  final LocationServiceStatus status;
+  const ServiceStatusChanged(this.status);
+}
 
-  const factory LocationEvent.serviceEnabledChanged(bool isEnabled) =
-      _ServiceEnabledChanged;
+class ServiceEnabledChanged extends LocationEvent {
+  final bool isEnabled;
+  const ServiceEnabledChanged(this.isEnabled);
 }

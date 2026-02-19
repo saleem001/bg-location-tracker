@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bg_location_tracker/common/utils/plugin_logs.dart';
 import 'package:bg_location_tracker/features/tracking/presentation/providers/plugin_logs_provider.dart';
 
-class LogViewerScreen extends ConsumerStatefulWidget {
+class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({super.key});
 
   @override
-  ConsumerState<LogViewerScreen> createState() => _LogViewerScreenState();
+  State<LogViewerScreen> createState() => _LogViewerScreenState();
 }
 
-class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
+class _LogViewerScreenState extends State<LogViewerScreen> {
   final ScrollController _scrollController = ScrollController();
+  final PluginLogsNotifier _logsNotifier = PluginLogsNotifier();
   bool _autoScroll = true;
   Set<PluginLogType> _selectedFilters = PluginLogType.values.toSet();
 
   @override
+  void initState() {
+    super.initState();
+    _logsNotifier.addListener(_onLogsChanged);
+  }
+
+  void _onLogsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   void dispose() {
+    _logsNotifier.removeListener(_onLogsChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -52,7 +65,7 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final logsState = ref.watch(pluginLogsProvider);
+    final logsState = _logsNotifier.state;
     final filteredLogs = logsState.logs
         .where((log) => _selectedFilters.contains(log.type))
         .toList();
@@ -80,7 +93,7 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
           IconButton(
             icon: const Icon(Icons.delete_forever),
             onPressed: () {
-              ref.read(pluginLogsProvider.notifier).clearLogs();
+              _logsNotifier.clearLogs();
             },
             tooltip: "Clear logs",
           ),
@@ -250,6 +263,7 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
             ],
           ),
         ),
+        titlePadding: const EdgeInsets.all(16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

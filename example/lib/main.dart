@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:permission_handler/permission_handler.dart';
@@ -17,7 +16,7 @@ Future<void> main() async {
     backgroundGeolocationHeadlessTask,
   );
 
-  runApp(const ProviderScope(child: POCApp()));
+  runApp(const POCApp());
 }
 
 class POCApp extends StatefulWidget {

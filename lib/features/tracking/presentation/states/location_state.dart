@@ -41,6 +41,8 @@ class Station {
         isInside: isInside ?? this.isInside,
         distanceMeters: distanceMeters ?? this.distanceMeters,
         status: status ?? this.status,
+        notifyOnEntry: notifyOnEntry,
+        notifyOnExit: notifyOnExit,
       );
 }
 

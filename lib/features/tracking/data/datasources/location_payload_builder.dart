@@ -1,6 +1,5 @@
 import 'package:bg_location_tracker/features/tracking/domain/entities/captain_location_data.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
-import 'package:uuid/uuid.dart';
 
 class LocationPayloadBuilder {
   LocationTrackingEvent? _location;
@@ -82,7 +81,6 @@ class LocationPayloadBuilder {
     );
 
     return CaptainLocationData(
-      batchNumber: const Uuid().v4(),
       captainId: _captainId ?? "UNKNOWN",
       data: payloadData,
     );

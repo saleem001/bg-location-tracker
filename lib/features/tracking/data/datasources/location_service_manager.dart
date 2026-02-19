@@ -13,6 +13,10 @@ import '../../presentation/states/location_state.dart';
 /// Manages the background location plugin and exposes mapped domain streams.
 /// Uses a fluent API for configuration and an aggregator for stream access.
 class BackgroundLocationServiceManager {
+  static final BackgroundLocationServiceManager _instance =
+      BackgroundLocationServiceManager._internal();
+  factory BackgroundLocationServiceManager() => _instance;
+  BackgroundLocationServiceManager._internal();
   //Controller/Granluar streams
   LocationManagerConfig _config = LocationManagerConfigBuilder().build();
   List<Station> stations = [];
@@ -46,8 +50,6 @@ class BackgroundLocationServiceManager {
 
   // Registry to track which plugin listeners are currently native-attached.
   final Set<LocationFeature> _enabledFeatures = {};
-
-  BackgroundLocationServiceManager();
 
   // ---------------------------------------------------------------------------
   // Public Actions

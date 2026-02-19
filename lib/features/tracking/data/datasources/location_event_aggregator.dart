@@ -12,20 +12,23 @@ import 'package:async/async.dart'; // For StreamGroup
 
 
 class LocationEventAggregator {
-  final BackgroundLocationServiceManager manager;
+  static final LocationEventAggregator _instance =
+      LocationEventAggregator._internal();
+  factory LocationEventAggregator() => _instance;
+  LocationEventAggregator._internal() : manager = BackgroundLocationServiceManager();
 
-  const LocationEventAggregator({required this.manager});
+  final BackgroundLocationServiceManager manager;
 
   // Unified event stream
   /// //does not need dispose as async* and yield* is used, they auto dispose once done.
   Stream<LocationEvent> get events async* {
     print('[Aggregator] events subscribed');
     yield* StreamGroup.merge<LocationEvent>([
-      manager.locationStream.map(LocationEvent.locationUpdated),
-      manager.geofenceStream.map(LocationEvent.geofenceTriggered),
-      manager.motionStream.map(LocationEvent.motionChanged),
-      manager.statusStream.map(LocationEvent.serviceStatusChanged),
-      manager.enabledStream.map(LocationEvent.serviceEnabledChanged),
+      manager.locationStream.map((location) => LocationUpdated(location)),
+      manager.geofenceStream.map((geofence) => GeofenceTriggered(geofence)),
+      manager.motionStream.map((motion) => MotionChanged(motion)),
+      manager.statusStream.map((status) => ServiceStatusChanged(status)),
+      manager.enabledStream.map((isEnabled) => ServiceEnabledChanged(isEnabled)),
     ]);
 
 

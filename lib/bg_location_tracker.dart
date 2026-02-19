@@ -2,14 +2,12 @@ library bg_location_tracker;
 
 // Export Models
 export 'features/tracking/presentation/states/location_state.dart';
-export 'features/tracking/presentation/states/location_app_state.dart';
 export 'features/tracking/domain/entities/geofence_event.dart';
 export 'features/tracking/domain/entities/location_event.dart';
 export 'features/tracking/domain/entities/tracking_event.dart';
 
 // Export Logic/ViewModels
 export 'features/tracking/presentation/viewmodels/location_tracker_viewmodel.dart';
-export 'features/tracking/presentation/providers/tracking_providers.dart';
 
 // Export Services
 export 'features/tracking/data/datasources/location_service_manager.dart';

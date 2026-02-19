@@ -1,71 +1,60 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bg_location_tracker/features/tracking/data/datasources/location_plugin_configs.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import '../../../../common/utils/location_utils.dart';
 import '../../../../common/utils/scope_functions.dart';
-import '../providers/tracking_providers.dart';
-import '../states/location_app_state.dart';
-import '../states/location_state.dart';
-
+import '../../data/datasources/location_plugin_configs.dart';
 import '../../domain/entities/geofence_event.dart';
+import '../../domain/entities/location_event.dart';
 import '../../domain/entities/tracking_event.dart';
 import '../../data/datasources/location_service_manager.dart';
-import '../../../../common/utils/location_utils.dart';
-import '../../presentation/providers/plugin_logs_provider.dart';
+import '../../data/datasources/location_event_aggregator.dart';
+import '../../data/datasources/socket_sync_service.dart';
+import '../../domain/services/geofence_notification_handler.dart';
+import '../providers/plugin_logs_provider.dart';
+import '../states/location_state.dart';
 
-class LocationTrackerViewModel extends Notifier<LocationState> {
-  @override
-  LocationState build() {
-    // Ensure Sync Service is active
-    ref.read(socketSyncServiceProvider);
-    ref.read(geofenceNotificationHandlerProvider);
+class LocationTrackerViewModel extends ChangeNotifier {
+  static final LocationTrackerViewModel _instance = LocationTrackerViewModel._internal();
+  factory LocationTrackerViewModel() => _instance;
 
-    ref.listen<LocationAppState>(locationStateNotifierProvider, (
-      previous,
-      next,
-    ) {
-      _handleStateChange(previous, next);
-    });
-
-    return LocationState.initial();
+  LocationTrackerViewModel._internal() {
+    _init();
   }
 
-  // Helper to get providers
-  BackgroundLocationServiceManager get _manager =>
-      ref.read(backgroundLocationServiceManagerProvider);
+  LocationState _state = LocationState.initial();
+  LocationState get state => _state;
 
-  void _handleStateChange(LocationAppState? previous, LocationAppState next) {
-    if (previous?.location != next.location && next.location != null) {
-      next.location?.let((location) {
-        _processLocation(location, location.isMoving);
-      });
-    }
+  StreamSubscription<LocationEvent>? _subscription;
+  final BackgroundLocationServiceManager _manager = BackgroundLocationServiceManager();
 
-    if (previous?.geofence != next.geofence && next.geofence != null) {
-      next.geofence?.let((geofence) {
-        _handleGeofence(geofence.identifier, geofence.action);
-      });
-    }
+  void _init() {
+    // Ensure Sync Service is active
+    SocketSyncService().start();
+    GeofenceNotificationHandler();
 
-    if (previous?.motion != next.motion) {
-      next.motion?.let((motion) {
-        ref
-            .read(pluginLogsProvider.notifier)
-            .logMotionChange(
-              motion.isMoving,
-              motion.location.latitude,
-              motion.location.longitude,
-            );
-        _processLocation(motion.location, motion.isMoving);
-      });
-    }
+    _subscription = LocationEventAggregator().events.listen(_handleEvent);
+  }
 
-    if (previous?.isServiceEnabled != next.isServiceEnabled) {
-      _handleServiceEnableChange(next.isServiceEnabled);
+  void _handleEvent(LocationEvent event) {
+    if (event is LocationUpdated) {
+      _processLocation(event.location, event.location.isMoving);
+    } else if (event is GeofenceTriggered) {
+      _handleGeofence(event.geofence.identifier, event.geofence.action);
+    } else if (event is MotionChanged) {
+      PluginLogsNotifier().logMotionChange(
+        event.motion.isMoving,
+        event.motion.location.latitude,
+        event.motion.location.longitude,
+      );
+      _processLocation(event.motion.location, event.motion.isMoving);
+    } else if (event is ServiceEnabledChanged) {
+      _handleServiceEnableChange(event.isEnabled);
     }
   }
 
   void _processLocation(LocationTrackingEvent trackingEvent, bool isMoving) {
     final speed = LocationUtils.msToKmh(trackingEvent.speed);
-    TripState? updatedTrip = state.activeTrip;
+    TripState? updatedTrip = _state.activeTrip;
 
     if (updatedTrip != null) {
       double minDistance = double.infinity;
@@ -89,30 +78,29 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       );
     }
 
-    state = state.copyWith(
+    _state = _state.copyWith(
       currentLocation: trackingEvent,
       speedKmh: speed,
       isMoving: isMoving,
       isStationary: !isMoving,
-      locationHistory: [...state.locationHistory, trackingEvent],
+      locationHistory: [..._state.locationHistory, trackingEvent],
       activeTrip: updatedTrip,
     );
 
     // Log location
-    ref
-        .read(pluginLogsProvider.notifier)
-        .logLocation(
-          trackingEvent.latitude,
-          trackingEvent.longitude,
-          trackingEvent.speed,
-          trackingEvent.odometer,
-        );
+    PluginLogsNotifier().logLocation(
+      trackingEvent.latitude,
+      trackingEvent.longitude,
+      trackingEvent.speed,
+      trackingEvent.odometer,
+    );
+    notifyListeners();
   }
 
   void _handleGeofence(String identifier, GeofenceAction action) {
-    if (state.activeTrip == null) return;
+    if (_state.activeTrip == null) return;
 
-    final updatedGeofences = state.activeTrip!.geofences.map((g) {
+    final updatedGeofences = _state.activeTrip!.geofences.map((g) {
       if (g.id == identifier) {
         final bool isInside = action == GeofenceAction.enter;
         return g.copyWith(
@@ -123,16 +111,18 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
       return g;
     }).toList();
 
-    state = state.copyWith(
-      activeTrip: state.activeTrip!.copyWith(geofences: updatedGeofences),
+    _state = _state.copyWith(
+      activeTrip: _state.activeTrip!.copyWith(geofences: updatedGeofences),
     );
 
     // Log the geofence event
-    ref.read(pluginLogsProvider.notifier).logGeofence(identifier, action.name);
+    PluginLogsNotifier().logGeofence(identifier, action.name);
+    notifyListeners();
   }
 
   void _handleServiceEnableChange(bool isServiceEnabled) {
-    state = state.copyWith(isServiceEnabled: isServiceEnabled);
+    _state = _state.copyWith(isServiceEnabled: isServiceEnabled);
+    notifyListeners();
   }
 
   Future<void> startTrip({
@@ -143,13 +133,14 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
     String? rideId,
     bool reset = true,
   }) async {
-    if (state.isLoading || state.activeTrip != null) return;
-    state = state.copyWith(isLoading: true, clearError: true);
+    if (_state.isLoading || _state.activeTrip != null) return;
+    _state = _state.copyWith(isLoading: true, clearError: true);
+    notifyListeners();
     try {
       // Simulate 2 seconds of processing/loading as requested
       await Future.delayed(const Duration(seconds: 2));
 
-      if (!state.isServiceEnabled) {
+      if (!_state.isServiceEnabled) {
         final config = _buildAdvancedConfig(reset: reset);
         await _manager
             .addOnLocation()
@@ -157,16 +148,8 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
             .addOnServiceStatusChange()
             .addOnMotionChange()
             .initialize(config);
-        state = state.copyWith(isServiceEnabled: true);
+        _state = _state.copyWith(isServiceEnabled: true);
       }
-
-      // _syncService.updateConfig(
-      //   LocationServiceConfig(
-      //     captainId: captainId,
-      //     rideId: rideId,
-      //     tripStatus: "ON_TRIP",
-      //   ),
-      // );
 
       final tripId = "trip_${DateTime.now().millisecondsSinceEpoch}";
 
@@ -179,47 +162,42 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         rideId: rideId,
       );
 
-      state = state.copyWith(isLoading: false, activeTrip: newTrip);
+      _state = _state.copyWith(isLoading: false, activeTrip: newTrip);
+      notifyListeners();
 
       await _manager.start();
 
-      ref
-          .watch(pluginLogsProvider.notifier)
-          .logInfo("Trip started with ${stations.length} geofences");
+      PluginLogsNotifier().logInfo("Trip started with ${stations.length} geofences");
     } catch (e) {
-      ref
-          .watch(pluginLogsProvider.notifier)
-          .logError("Start Trip Failed", error: e);
-      state = state.copyWith(isLoading: false, error: "Start Failed: $e");
+      PluginLogsNotifier().logError("Start Trip Failed", error: e);
+      _state = _state.copyWith(isLoading: false, error: "Start Failed: $e");
+      notifyListeners();
     }
   }
 
   Future<void> stopTrip() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    _state = _state.copyWith(isLoading: true, clearError: true);
+    notifyListeners();
     try {
       // 1. Stop the background geolocation service
       await _manager.pause();
 
-      // 2. Update captain info to IDLE
-      // _syncService.updateConfig(LocationServiceConfig(tripStatus: "IDLE"));
-
-      // 3. Fully reset the state
-      state = state.copyWith(
+      // 2. Fully reset the state
+      _state = _state.copyWith(
         isLoading: false,
         clearActiveTrip: true,
-        // Use the new flag to properly clear the trip
         isServiceEnabled: false,
         isMoving: false,
         isStationary: true,
         speedKmh: 0.0,
       );
 
-      ref.read(pluginLogsProvider.notifier).logInfo("Trip stopped");
+      PluginLogsNotifier().logInfo("Trip stopped");
+      notifyListeners();
     } catch (e) {
-      ref
-          .read(pluginLogsProvider.notifier)
-          .logError("Stop Trip Failed", error: e);
-      state = state.copyWith(isLoading: false, error: "Stop Failed: $e");
+      PluginLogsNotifier().logError("Stop Trip Failed", error: e);
+      _state = _state.copyWith(isLoading: false, error: "Stop Failed: $e");
+      notifyListeners();
     }
   }
 
@@ -253,5 +231,11 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         )
         .setReset(reset)
         .build();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

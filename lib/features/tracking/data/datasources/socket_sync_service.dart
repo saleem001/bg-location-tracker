@@ -1,28 +1,31 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart';
 import '../../domain/entities/location_event.dart';
 import '../../domain/entities/tracking_event.dart';
 import 'i_tracking_transport.dart';
 import 'location_payload_builder.dart';
 import 'location_service_config.dart';
+import 'socket_tracking_transport.dart';
+import 'location_event_aggregator.dart';
 
 class SocketSyncService {
+  static final SocketSyncService _instance = SocketSyncService._internal(SocketTrackingTransport());
+  factory SocketSyncService() => _instance;
+  SocketSyncService._internal(this._transport);
+
   final ITrackingTransport _transport;
   LocationServiceConfig _config = LocationServiceConfig();
 
   StreamSubscription<LocationEvent>? _subscription;
 
-  SocketSyncService(this._transport);
-
   void updateConfig(LocationServiceConfig config) {
     _config = config;
   }
 
-  void start(Stream<LocationEvent> eventStream) {
+  void start() {
     _subscription?.cancel();
-    _subscription = eventStream.listen(_handleEvent);
+    _subscription = LocationEventAggregator().events.listen(_handleEvent);
   }
 
   void stop() {
@@ -31,17 +34,11 @@ class SocketSyncService {
   }
 
   Future<void> _handleEvent(LocationEvent event) async {
-    await event.when(
-      locationUpdated: (location) async {
-        await _sendLocation(location);
-      },
-      geofenceTriggered: (geofence) async {
-        await _transport.sendStationEntryAlert(geofence.identifier);
-      },
-      motionChanged: (_) async {},
-      serviceStatusChanged: (_) async {},
-      serviceEnabledChanged: (_) async {},
-    );
+    if (event is LocationUpdated) {
+      await _sendLocation(event.location);
+    } else if (event is GeofenceTriggered) {
+      await _transport.sendStationEntryAlert(event.geofence.identifier);
+    }
   }
 
   Future<void> _sendLocation(LocationTrackingEvent event) async {

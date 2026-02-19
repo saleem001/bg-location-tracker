@@ -1,16 +1,13 @@
 class CaptainLocationData {
-  final String batchNumber;
   final String captainId;
   final LocationPayloadData data;
 
   CaptainLocationData({
-    required this.batchNumber,
     required this.captainId,
     required this.data,
   });
 
   Map<String, dynamic> toJson() => {
-    "batch_number": batchNumber,
     "captain": captainId,
     "data": data.toJson(),
   };
