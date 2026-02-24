@@ -60,10 +60,10 @@ class BackgroundLocationServiceManager {
     final bgConfig = mapToBgConfig(_config);
 
     await bg.BackgroundGeolocation.ready(bgConfig);
-    //shall listen location at least if initialized is called
-    addOnLocation();
-    //shall start listening immediately once initialized
-    await start();
+    // //shall listen location at least if initialized is called
+    // addOnLocation();
+    // //shall start listening immediately once initialized
+    // await start();
     return this;
   }
 
