@@ -13,13 +13,6 @@ import 'package:async/async.dart';
 class LocationEventAggregator {
   final BackgroundLocationServiceManager manager;
 
-  final LocationTrackingEventMapper _locationMapper =
-      LocationTrackingEventMapper();
-  final MotionChangeEventMapper _motionMapper = MotionChangeEventMapper();
-  final GeofenceEventMapper _geofenceMapper = GeofenceEventMapper();
-  final LocationServiceStatusMapper _statusMapper =
-      LocationServiceStatusMapper();
-
   LocationEventAggregator({required this.manager});
 
   // Unified event stream
@@ -27,16 +20,16 @@ class LocationEventAggregator {
   Stream<LocationEvent> get events async* {
     yield* StreamGroup.merge<LocationEvent>([
       manager.locationStream.map(
-        (loc) => LocationEvent.locationUpdated(_locationMapper.map(loc)),
+        (loc) => LocationEvent.locationUpdated(loc),
       ),
       manager.geofenceStream.map(
-        (event) => LocationEvent.geofenceTriggered(_geofenceMapper.map(event)),
+        (event) => LocationEvent.geofenceTriggered(event),
       ),
       manager.motionStream.map(
-        (event) => LocationEvent.motionChanged(_motionMapper.map(event)),
+        (event) => LocationEvent.motionChanged(event),
       ),
       manager.statusStream.map(
-        (event) => LocationEvent.serviceStatusChanged(_statusMapper.map(event)),
+        (event) => LocationEvent.serviceStatusChanged(event),
       ),
       manager.enabledStream.map(
         (enabled) => LocationEvent.serviceEnabledChanged(enabled),

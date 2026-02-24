@@ -1,3 +1,4 @@
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
 
@@ -8,17 +9,17 @@ part 'location_event.freezed.dart';
 
 @freezed
 class LocationEvent with _$LocationEvent {
-  const factory LocationEvent.locationUpdated(LocationTrackingEvent location) =
+  const factory LocationEvent.locationUpdated(bg.Location location) =
       _LocationUpdated;
 
-  const factory LocationEvent.geofenceTriggered(GeofenceEvent geofence) =
+  const factory LocationEvent.geofenceTriggered(bg.GeofenceEvent geofence) =
       _GeofenceTriggered;
 
-  const factory LocationEvent.motionChanged(MotionChangeEvent motion) =
+  const factory LocationEvent.motionChanged(bg.Location motion) =
       _MotionChanged;
 
   const factory LocationEvent.serviceStatusChanged(
-    LocationServiceStatusEvent status,
+      bg.ProviderChangeEvent status,
   ) = _ServiceStatusChanged;
 
   const factory LocationEvent.serviceEnabledChanged(bool isEnabled) =
