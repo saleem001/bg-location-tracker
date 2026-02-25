@@ -5,7 +5,7 @@ import 'data_mapper.dart';
 
 // Top-level mapping functions for Config policies
 
-bg.Config mapToBgConfig(LocationManagerConfig config){
+bg.Config mapToBgConfig(LocationManagerConfig config) {
   return bg.Config(
     reset: config.reset,
     debug: config.logging.debug,

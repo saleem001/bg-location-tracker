@@ -57,10 +57,6 @@ class LocationTrackerViewModel extends Notifier<LocationState> {
         _processLocation(motion.location, motion.isMoving);
       });
     }
-
-    if (previous?.isServiceEnabled != next.isServiceEnabled) {
-      _handleServiceEnableChange(next.isServiceEnabled);
-    }
   }
 
   void _processLocation(LocationTrackingEvent trackingEvent, bool isMoving) {

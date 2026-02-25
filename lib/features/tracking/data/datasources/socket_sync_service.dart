@@ -33,7 +33,7 @@ class SocketSyncService {
   Future<void> _handleEvent(LocationEvent event) async {
     await event.when(
       locationUpdated: (location) async {
-        await _sendLocation(location);
+        await _sendLocation(LocationTrackingEventMapper().map(location));
       },
       geofenceTriggered: (geofence) async {
         await _transport.sendStationEntryAlert(geofence.identifier);

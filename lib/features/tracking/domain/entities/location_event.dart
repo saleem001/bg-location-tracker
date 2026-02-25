@@ -1,4 +1,5 @@
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
 
@@ -19,7 +20,7 @@ class LocationEvent with _$LocationEvent {
       _MotionChanged;
 
   const factory LocationEvent.serviceStatusChanged(
-      bg.ProviderChangeEvent status,
+    bg.ProviderChangeEvent status,
   ) = _ServiceStatusChanged;
 
   const factory LocationEvent.serviceEnabledChanged(bool isEnabled) =

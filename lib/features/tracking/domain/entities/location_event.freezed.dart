@@ -131,7 +131,7 @@ return serviceEnabledChanged(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( LocationTrackingEvent location)?  locationUpdated,TResult Function( GeofenceEvent geofence)?  geofenceTriggered,TResult Function( MotionChangeEvent motion)?  motionChanged,TResult Function( LocationServiceStatusEvent status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bg.Location location)?  locationUpdated,TResult Function( bg.GeofenceEvent geofence)?  geofenceTriggered,TResult Function( bg.Location motion)?  motionChanged,TResult Function( bg.ProviderChangeEvent status)?  serviceStatusChanged,TResult Function( bool isEnabled)?  serviceEnabledChanged,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LocationUpdated() when locationUpdated != null:
 return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
@@ -156,7 +156,7 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( LocationTrackingEvent location)  locationUpdated,required TResult Function( GeofenceEvent geofence)  geofenceTriggered,required TResult Function( MotionChangeEvent motion)  motionChanged,required TResult Function( LocationServiceStatusEvent status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bg.Location location)  locationUpdated,required TResult Function( bg.GeofenceEvent geofence)  geofenceTriggered,required TResult Function( bg.Location motion)  motionChanged,required TResult Function( bg.ProviderChangeEvent status)  serviceStatusChanged,required TResult Function( bool isEnabled)  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
 case _LocationUpdated():
 return locationUpdated(_that.location);case _GeofenceTriggered():
@@ -180,7 +180,7 @@ return serviceEnabledChanged(_that.isEnabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( LocationTrackingEvent location)?  locationUpdated,TResult? Function( GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( MotionChangeEvent motion)?  motionChanged,TResult? Function( LocationServiceStatusEvent status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bg.Location location)?  locationUpdated,TResult? Function( bg.GeofenceEvent geofence)?  geofenceTriggered,TResult? Function( bg.Location motion)?  motionChanged,TResult? Function( bg.ProviderChangeEvent status)?  serviceStatusChanged,TResult? Function( bool isEnabled)?  serviceEnabledChanged,}) {final _that = this;
 switch (_that) {
 case _LocationUpdated() when locationUpdated != null:
 return locationUpdated(_that.location);case _GeofenceTriggered() when geofenceTriggered != null:
@@ -202,7 +202,7 @@ class _LocationUpdated implements LocationEvent {
   const _LocationUpdated(this.location);
   
 
- final  LocationTrackingEvent location;
+ final  bg.Location location;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -234,7 +234,7 @@ abstract mixin class _$LocationUpdatedCopyWith<$Res> implements $LocationEventCo
   factory _$LocationUpdatedCopyWith(_LocationUpdated value, $Res Function(_LocationUpdated) _then) = __$LocationUpdatedCopyWithImpl;
 @useResult
 $Res call({
- LocationTrackingEvent location
+ bg.Location location
 });
 
 
@@ -254,7 +254,7 @@ class __$LocationUpdatedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? location = null,}) {
   return _then(_LocationUpdated(
 null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as LocationTrackingEvent,
+as bg.Location,
   ));
 }
 
@@ -268,7 +268,7 @@ class _GeofenceTriggered implements LocationEvent {
   const _GeofenceTriggered(this.geofence);
   
 
- final  GeofenceEvent geofence;
+ final  bg.GeofenceEvent geofence;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -300,7 +300,7 @@ abstract mixin class _$GeofenceTriggeredCopyWith<$Res> implements $LocationEvent
   factory _$GeofenceTriggeredCopyWith(_GeofenceTriggered value, $Res Function(_GeofenceTriggered) _then) = __$GeofenceTriggeredCopyWithImpl;
 @useResult
 $Res call({
- GeofenceEvent geofence
+ bg.GeofenceEvent geofence
 });
 
 
@@ -320,7 +320,7 @@ class __$GeofenceTriggeredCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? geofence = null,}) {
   return _then(_GeofenceTriggered(
 null == geofence ? _self.geofence : geofence // ignore: cast_nullable_to_non_nullable
-as GeofenceEvent,
+as bg.GeofenceEvent,
   ));
 }
 
@@ -334,7 +334,7 @@ class _MotionChanged implements LocationEvent {
   const _MotionChanged(this.motion);
   
 
- final  MotionChangeEvent motion;
+ final  bg.Location motion;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -366,7 +366,7 @@ abstract mixin class _$MotionChangedCopyWith<$Res> implements $LocationEventCopy
   factory _$MotionChangedCopyWith(_MotionChanged value, $Res Function(_MotionChanged) _then) = __$MotionChangedCopyWithImpl;
 @useResult
 $Res call({
- MotionChangeEvent motion
+ bg.Location motion
 });
 
 
@@ -386,7 +386,7 @@ class __$MotionChangedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? motion = null,}) {
   return _then(_MotionChanged(
 null == motion ? _self.motion : motion // ignore: cast_nullable_to_non_nullable
-as MotionChangeEvent,
+as bg.Location,
   ));
 }
 
@@ -400,7 +400,7 @@ class _ServiceStatusChanged implements LocationEvent {
   const _ServiceStatusChanged(this.status);
   
 
- final  LocationServiceStatusEvent status;
+ final  bg.ProviderChangeEvent status;
 
 /// Create a copy of LocationEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -432,7 +432,7 @@ abstract mixin class _$ServiceStatusChangedCopyWith<$Res> implements $LocationEv
   factory _$ServiceStatusChangedCopyWith(_ServiceStatusChanged value, $Res Function(_ServiceStatusChanged) _then) = __$ServiceStatusChangedCopyWithImpl;
 @useResult
 $Res call({
- LocationServiceStatusEvent status
+ bg.ProviderChangeEvent status
 });
 
 
@@ -452,7 +452,7 @@ class __$ServiceStatusChangedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
   return _then(_ServiceStatusChanged(
 null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as LocationServiceStatusEvent,
+as bg.ProviderChangeEvent,
   ));
 }
 
