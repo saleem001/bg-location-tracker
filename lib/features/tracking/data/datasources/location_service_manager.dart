@@ -52,13 +52,6 @@ class BackgroundLocationServiceManager {
     _config = config;
     final bgConfig = mapToBgConfig(_config);
     await bg.BackgroundGeolocation.ready(bgConfig);
-
-    // Optionally listen to location by default
-    addOnLocation();
-
-    // Auto-start
-    await start();
-
     return this;
   }
 
