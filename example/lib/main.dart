@@ -31,52 +31,10 @@ class _POCAppState extends State<POCApp> {
   @override
   void initState() {
     super.initState();
-    _checkLocationPermission();
-  }
-
-  Future<void> _checkLocationPermission() async {
-    await _requestPermission(Permission.notification);
-    await _requestPermission(Permission.location);
-    await _requestPermission(Permission.locationAlways);
-  }
-
-  Future<void> _requestPermission(Permission permission) async {
-    PermissionStatus status = await permission.status;
-
-    if (status.isDenied) {
-      PermissionStatus newStatus = await permission.request();
-      if (newStatus.isPermanentlyDenied) {
-        Toast.show(
-          "Please allow all the time location permissions in settings",
-          duration: Toast.lengthLong,
-          gravity: Toast.bottom,
-        );
-      }
-    } else if (status.isPermanentlyDenied) {
-      Toast.show(
-        "Please allow all the time location permissions in settings",
-        duration: Toast.lengthLong,
-        gravity: Toast.bottom,
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true).copyWith(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.cyan,
-          brightness: Brightness.dark,
-        ),
-      ),
-      home: Builder(
-        builder: (context) {
-          ToastContext().init(context);
-          return const LocationDashboard();
-        },
-      ),
-    );
+    return MaterialApp();
   }
 }

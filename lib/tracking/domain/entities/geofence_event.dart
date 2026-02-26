@@ -4,6 +4,7 @@ import 'package:bg_location_tracker/common/constants/app_constants.dart';
 import 'package:bg_location_tracker/common/mapper/data_mapper.dart';
 
 enum GeofenceAction {
+  none,
   enter,
   exit;
 
@@ -14,7 +15,7 @@ enum GeofenceAction {
       case AppConstants.geofenceActionExit:
         return GeofenceAction.exit;
       default:
-        throw ArgumentError('Unknown geofence action: $value');
+        return GeofenceAction.none;
     }
   }
 

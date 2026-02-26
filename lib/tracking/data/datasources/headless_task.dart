@@ -14,8 +14,6 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
   final container = ProviderContainer();
 
   try {
-    final transport = container.read(trackingTransportProvider);
-
     switch (event.name) {
       case bg.Event.LOCATION:
       case bg.Event.MOTIONCHANGE:
@@ -38,7 +36,6 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
         switch (geofenceEvent.action) {
           case AppConstants.geofenceActionEnter:
             try {
-              await transport.sendStationEntryAlert(geofenceEvent.identifier);
               await notifications.showGeofenceAlert(
                 displayName,
                 notificationId,

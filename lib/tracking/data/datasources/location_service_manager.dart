@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
 import 'package:bg_location_tracker/common/mapper/location_config_mapper.dart';
-import 'package:bg_location_tracker/features/tracking/data/datasources/location_plugin_configs.dart';
 import '../../domain/entities/location_feature.dart';
-import '../../presentation/states/location_state.dart';
+import '../../domain/entities/location_state.dart';
+import '../location_service_manager_config.dart';
+import '../location_service_manager_config_types.dart';
 
 /// Manages the background location plugin and exposes raw plugin event streams.
 /// Controllers are initialized at class level and remain stable throughout the lifecycle.
@@ -13,21 +15,25 @@ class BackgroundLocationServiceManager {
 
   // Stable controllers - initialized once, live until dispose()
   final StreamController<bg.Location> _locationController =
-  StreamController<bg.Location>.broadcast();
+      StreamController<bg.Location>.broadcast();
   final StreamController<bg.Location> _motionController =
-  StreamController<bg.Location>.broadcast();
+      StreamController<bg.Location>.broadcast();
   final StreamController<bg.GeofenceEvent> _geofenceController =
-  StreamController<bg.GeofenceEvent>.broadcast();
+      StreamController<bg.GeofenceEvent>.broadcast();
   final StreamController<bg.ProviderChangeEvent> _statusController =
-  StreamController<bg.ProviderChangeEvent>.broadcast();
+      StreamController<bg.ProviderChangeEvent>.broadcast();
   final StreamController<bool> _enabledController =
-  StreamController<bool>.broadcast();
+      StreamController<bool>.broadcast();
 
   // Public streams - always available
   Stream<bg.Location> get locationStream => _locationController.stream;
+
   Stream<bg.Location> get motionStream => _motionController.stream;
+
   Stream<bg.GeofenceEvent> get geofenceStream => _geofenceController.stream;
+
   Stream<bg.ProviderChangeEvent> get statusStream => _statusController.stream;
+
   Stream<bool> get enabledStream => _enabledController.stream;
 
   // Track enabled features
@@ -47,9 +53,9 @@ class BackgroundLocationServiceManager {
   // ---------------------------------------------------------------------------
 
   Future<BackgroundLocationServiceManager> initialize(
-      LocationManagerConfig config,
-      ) async {
-    _config = config;
+      LocationServiceManagerConfigType configType,
+  ) async {
+    _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
     await bg.BackgroundGeolocation.ready(bgConfig);
     return this;
@@ -71,11 +77,16 @@ class BackgroundLocationServiceManager {
   }
 
   Future<void> pause() async {
+    final state = await bg.BackgroundGeolocation.state;
+    if (!state.enabled) return;
     await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
   }
 
+  // DON'T clear features - keep them for restart
   Future<void> stop() async {
+    final state = await bg.BackgroundGeolocation.state;
+    if (!state.enabled) return;
     await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
     bg.BackgroundGeolocation.removeListeners();
@@ -84,13 +95,14 @@ class BackgroundLocationServiceManager {
     _onGeofenceCallback = null;
     _onStatusCallback = null;
     _onEnabledCallback = null;
-    // DON'T clear features - keep them for restart
-    // _enabledFeatures.clear(); ← REMOVED
   }
 
   Future<void> dispose() async {
-    await bg.BackgroundGeolocation.changePace(false);
-    await bg.BackgroundGeolocation.stop();
+    final state = await bg.BackgroundGeolocation.state;
+    if (state.enabled) {
+      await bg.BackgroundGeolocation.changePace(false);
+      await bg.BackgroundGeolocation.stop();
+    }
     bg.BackgroundGeolocation.removeListeners();
     _enabledFeatures.clear();
     await _locationController.close();
@@ -269,13 +281,49 @@ class BackgroundLocationServiceManager {
   // Configuration & Geofence Management
   // ---------------------------------------------------------------------------
 
-  Future<void> updateConfigs(LocationManagerConfig config) async {
-    _config = config;
+  Future<void> updateConfigs(LocationServiceManagerConfigType configType) async {
+    _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
     await bg.BackgroundGeolocation.setConfig(bgConfig);
   }
 
   LocationManagerConfig getConfigs() => _config;
+
+  Future<bg.Location> getCurrentPosition() async {
+    return await bg.BackgroundGeolocation.getCurrentPosition(
+      persist: false,
+      samples: 1,
+    );
+  }
+
+  Future<void> addStationGeofence(
+    String id,
+    double lat,
+    double lng,
+    double rad, [
+    bool onEntry = true,
+    bool onExit = true,
+  ]) {
+    return bg.BackgroundGeolocation.addGeofence(
+      bg.Geofence(
+        identifier: id,
+        radius: rad,
+        latitude: lat,
+        longitude: lng,
+        notifyOnEntry: onEntry,
+        notifyOnExit: onExit,
+      ),
+    );
+  }
+
+  Future<void> removeStationGeofence(String id) =>
+      bg.BackgroundGeolocation.removeGeofence(id);
+
+  Future<bool> isServiceEnabled() =>
+      bg.BackgroundGeolocation.state.then((state) => state.enabled);
+
+  bool isFeatureEnabled(LocationFeature feature) =>
+      _enabledFeatures.contains(feature);
 
   Future<void> _setStationGeofences(List<Station> stations) async {
     await bg.BackgroundGeolocation.removeGeofences();
@@ -292,37 +340,4 @@ class BackgroundLocationServiceManager {
       );
     }
   }
-
-  Future<bg.Location> getCurrentPosition() async {
-    return await bg.BackgroundGeolocation.getCurrentPosition(
-      persist: false,
-      samples: 1,
-    );
-  }
-
-  Future<void> addStationGeofence(
-      String id,
-      double lat,
-      double lng,
-      double rad, [
-        bool onEntry = true,
-        bool onExit = true,
-      ]) {
-    return bg.BackgroundGeolocation.addGeofence(
-      bg.Geofence(
-        identifier: id,
-        radius: rad,
-        latitude: lat,
-        longitude: lng,
-        notifyOnEntry: onEntry,
-        notifyOnExit: onExit,
-      ),
-    );
-  }
-
-  Future<void> removeStationGeofence(String id) =>
-      bg.BackgroundGeolocation.removeGeofence(id);
-
-  bool isFeatureEnabled(LocationFeature feature) =>
-      _enabledFeatures.contains(feature);
 }

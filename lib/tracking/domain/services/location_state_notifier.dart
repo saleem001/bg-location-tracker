@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/tracking_event.dart';
-import '../../domain/entities/geofence_event.dart';
-import '../../domain/entities/location_service_status.dart';
 import '../../presentation/states/location_app_state.dart';
+import '../entities/geofence_event.dart';
 import '../entities/location_event.dart';
+import '../entities/location_service_status.dart';
+import '../entities/tracking_event.dart';
 
 class LocationStateNotifier extends StateNotifier<LocationAppState> {
   final Stream<LocationEvent> events;

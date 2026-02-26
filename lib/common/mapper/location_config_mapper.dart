@@ -1,6 +1,6 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
-import '../../features/tracking/data/datasources/location_plugin_configs.dart';
+import '../../tracking/data/location_service_manager_config.dart';
 import 'data_mapper.dart';
 
 // Top-level mapping functions for Config policies

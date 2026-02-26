@@ -1,11 +1,6 @@
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
     as bg;
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:bg_location_tracker/features/tracking/domain/entities/tracking_event.dart';
-
-import 'geofence_event.dart';
-import 'location_service_status.dart';
-
 part 'location_event.freezed.dart';
 
 @freezed
