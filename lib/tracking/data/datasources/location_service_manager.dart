@@ -79,7 +79,6 @@ class BackgroundLocationServiceManager {
   Future<void> pause() async {
     try {
       if (_enabledFeatures.contains(LocationFeature.location)) {
-        await bg.BackgroundGeolocation.changePace(false);
         await bg.BackgroundGeolocation.stop();
       }
     } catch (e) {
