@@ -3,9 +3,6 @@ import 'package:flutter_background_geolocation/flutter_background_geolocation.da
     as bg;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../presentation/providers/tracking_providers.dart';
-import '../../../../common/utils/notification_service.dart';
-
 @pragma('vm:entry-point')
 void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
   print('[HeadlessTask] Event received: ${event.name}');
@@ -29,29 +26,12 @@ void backgroundGeolocationHeadlessTask(bg.HeadlessEvent event) async {
         if (displayName.contains("_")) {
           displayName = displayName.split("_").first;
         }
-
-        final notifications = NotificationService();
-        await notifications.init(requestPermissions: false);
         final notificationId = geofenceEvent.identifier.hashCode;
         switch (geofenceEvent.action) {
           case AppConstants.geofenceActionEnter:
-            try {
-              await notifications.showGeofenceAlert(
-                displayName,
-                notificationId,
-              );
-            } catch (e) {
-              await notifications.showGeofenceAlert(
-                displayName,
-                notificationId,
-              );
-            }
+
             break;
           case AppConstants.geofenceActionExit:
-            await notifications.showGeofenceExitAlert(
-              displayName,
-              notificationId,
-            );
             break;
         }
         break;

@@ -9,8 +9,6 @@ import 'package:toast/toast.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Local Notifications
-  await NotificationService().init();
 
   // Register Headless Task
   bg.BackgroundGeolocation.registerHeadlessTask(

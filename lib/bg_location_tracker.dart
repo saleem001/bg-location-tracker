@@ -12,7 +12,6 @@ export 'tracking/presentation/providers/tracking_providers.dart';
 
 // Export Services
 export 'tracking/data/datasources/location_service_manager.dart';
-export 'common/utils/notification_service.dart';
 
 // Export Headless Task (Crucial for background work)
 export 'tracking/data/datasources/headless_task.dart';
