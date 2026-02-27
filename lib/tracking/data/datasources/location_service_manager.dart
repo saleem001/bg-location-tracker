@@ -79,7 +79,11 @@ class BackgroundLocationServiceManager {
   Future<void> pause() async {
     // final state = await bg.BackgroundGeolocation.state;
     // if (!state.enabled) return;
-    await bg.BackgroundGeolocation.changePace(false);
+    try {
+      await bg.BackgroundGeolocation.changePace(false);
+    } catch (e) {
+      
+    }
     await bg.BackgroundGeolocation.stop();
   }
 
