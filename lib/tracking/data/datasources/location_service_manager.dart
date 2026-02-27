@@ -62,10 +62,14 @@ class BackgroundLocationServiceManager {
   }
 
   Future<void> start() async {
-    final state = await bg.BackgroundGeolocation.state;
-    if (state.enabled) return;
-    await bg.BackgroundGeolocation.start();
-    await bg.BackgroundGeolocation.changePace(true);
+    // final state = await bg.BackgroundGeolocation.state;
+    // if (state.enabled) return;
+    try {
+      await bg.BackgroundGeolocation.start();
+      await bg.BackgroundGeolocation.changePace(true);
+    } catch (e) {
+      print("BACKGROUND_EXP:::::11111:START::$e");
+    }
   }
 
   Future<void> resume() async {
@@ -82,7 +86,7 @@ class BackgroundLocationServiceManager {
         await bg.BackgroundGeolocation.stop();
       }
     } catch (e) {
-      print("BACKGROUND_EXP:::::11111$e");
+      print("BACKGROUND_EXP::::PAUSE:::11111$e");
     }
   }
 
