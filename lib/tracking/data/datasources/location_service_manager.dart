@@ -77,11 +77,11 @@ class BackgroundLocationServiceManager {
   }
 
   Future<void> pause() async {
-    // final state = await bg.BackgroundGeolocation.state;
-    // if (!state.enabled) return;
     try {
-      await bg.BackgroundGeolocation.changePace(false);
-      await bg.BackgroundGeolocation.stop();
+      if (_enabledFeatures.contains(LocationFeature.location)) {
+        await bg.BackgroundGeolocation.changePace(false);
+        await bg.BackgroundGeolocation.stop();
+      }
     } catch (e) {
       print("BACKGROUND_EXP:::::11111$e");
     }
