@@ -79,8 +79,12 @@ class BackgroundLocationServiceManager {
   Future<void> pause() async {
     // final state = await bg.BackgroundGeolocation.state;
     // if (!state.enabled) return;
-    await bg.BackgroundGeolocation.changePace(false);
-    await bg.BackgroundGeolocation.stop();
+    try {
+      await bg.BackgroundGeolocation.changePace(false);
+      await bg.BackgroundGeolocation.stop();
+    } catch (e) {
+      print("BACKGROUND_EXP:::::11111$e");
+    }
   }
 
   // DON'T clear features - keep them for restart
