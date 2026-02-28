@@ -60,7 +60,17 @@ class BackgroundLocationServiceManager {
     final bgConfig = mapToBgConfig(_config);
     _listenLocation();
     _listenStatus();
-    await bg.BackgroundGeolocation.ready(bgConfig);
+
+    await bg.BackgroundGeolocation.ready(bg.Config(
+      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+      distanceFilter: 10.0,
+      stopOnTerminate: false,
+      startOnBoot: true,
+      enableHeadless: true,
+      debug: true,
+      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+      locationAuthorizationRequest: 'Always',
+    ));
     print('[BackgroundLocationServiceManager] Ready');
     return this;
   }
