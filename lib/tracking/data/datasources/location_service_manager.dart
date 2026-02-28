@@ -58,6 +58,8 @@ class BackgroundLocationServiceManager {
     print('[BackgroundLocationServiceManager] Initializing with config: $configType');
     _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
+    _listenLocation();
+    _listenStatus();
     await bg.BackgroundGeolocation.ready(bgConfig);
     print('[BackgroundLocationServiceManager] Ready');
     return this;
