@@ -53,24 +53,34 @@ class BackgroundLocationServiceManager {
   // ---------------------------------------------------------------------------
 
   Future<BackgroundLocationServiceManager> initialize(
-      LocationServiceManagerConfigType configType,
+    LocationServiceManagerConfigType configType,
   ) async {
-    print('[BackgroundLocationServiceManager] Initializing with config: $configType');
+    print(
+      '[BackgroundLocationServiceManager] Initializing with config: $configType',
+    );
     _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
-    _listenLocation();
-    _listenStatus();
 
-    await bg.BackgroundGeolocation.ready(bg.Config(
-      desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
-      distanceFilter: 10.0,
-      stopOnTerminate: false,
-      startOnBoot: true,
-      enableHeadless: true,
-      debug: true,
-      logLevel: bg.Config.LOG_LEVEL_VERBOSE,
-      locationAuthorizationRequest: 'Always',
-    ));
+    bg.BackgroundGeolocation.onProviderChange((event) {
+      print('BSM [ProviderChange] $event');
+    });
+    bg.BackgroundGeolocation.onLocation((loc) {
+      print('BSM [Location] $loc');
+    });
+
+    await bg.BackgroundGeolocation.ready(
+      bg.Config(
+        desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+        distanceFilter: 10.0,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        enableHeadless: true,
+        debug: true,
+        logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+        locationAuthorizationRequest: 'Always',
+        reset: true,
+      ),
+    );
     print('[BackgroundLocationServiceManager] Ready');
     return this;
   }
@@ -84,7 +94,9 @@ class BackgroundLocationServiceManager {
       await bg.BackgroundGeolocation.changePace(true);
       print('[BackgroundLocationServiceManager] Service started successfully');
     } catch (e) {
-      print("[BackgroundLocationServiceManager] BACKGROUND_EXP:::::11111:START::$e");
+      print(
+        "[BackgroundLocationServiceManager] BACKGROUND_EXP:::::11111:START::$e",
+      );
     }
   }
 
@@ -106,7 +118,9 @@ class BackgroundLocationServiceManager {
         print('[BackgroundLocationServiceManager] Service paused successfully');
       }
     } catch (e) {
-      print("[BackgroundLocationServiceManager] BACKGROUND_EXP::::PAUSE:::11111$e");
+      print(
+        "[BackgroundLocationServiceManager] BACKGROUND_EXP::::PAUSE:::11111$e",
+      );
     }
   }
 
@@ -180,7 +194,7 @@ class BackgroundLocationServiceManager {
       if (!_locationController.isClosed) {
         print('[BackgroundLocationServiceManager] location added:$loc');
         _locationController.add(loc);
-      }else{
+      } else {
         print('[BackgroundLocationServiceManager] location is closed');
       }
     };
@@ -273,8 +287,8 @@ class BackgroundLocationServiceManager {
       if (!_statusController.isClosed) {
         _statusController.add(status);
         print('[BackgroundLocationServiceManager] perimssion :$status');
-      }else{
-      print('[BackgroundLocationServiceManager] permision stream closed');
+      } else {
+        print('[BackgroundLocationServiceManager] permision stream closed');
       }
     };
     bg.BackgroundGeolocation.onProviderChange(_onStatusCallback!);
@@ -323,7 +337,9 @@ class BackgroundLocationServiceManager {
   // Configuration & Geofence Management
   // ---------------------------------------------------------------------------
 
-  Future<void> updateConfigs(LocationServiceManagerConfigType configType) async {
+  Future<void> updateConfigs(
+    LocationServiceManagerConfigType configType,
+  ) async {
     _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
     await bg.BackgroundGeolocation.setConfig(bgConfig);
