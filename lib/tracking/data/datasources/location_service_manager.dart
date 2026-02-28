@@ -166,7 +166,10 @@ class BackgroundLocationServiceManager {
   void _listenLocation() {
     _onLocationCallback = (loc) {
       if (!_locationController.isClosed) {
+        print('[BackgroundLocationServiceManager] location added:$loc');
         _locationController.add(loc);
+      }else{
+        print('[BackgroundLocationServiceManager] location is closed');
       }
     };
     bg.BackgroundGeolocation.onLocation(_onLocationCallback!);
@@ -195,7 +198,7 @@ class BackgroundLocationServiceManager {
   void _listenMotion() {
     _onMotionCallback = (loc) {
       if (!_motionController.isClosed) {
-        print('[BackgroundLocationServiceManager] lcoation added:$loc');
+        print('[BackgroundLocationServiceManager] motion added:$loc');
         _motionController.add(loc);
       }
     };
@@ -258,6 +261,8 @@ class BackgroundLocationServiceManager {
       if (!_statusController.isClosed) {
         _statusController.add(status);
         print('[BackgroundLocationServiceManager] perimssion :$status');
+      }else{
+      print('[BackgroundLocationServiceManager] permision stream closed');
       }
     };
     bg.BackgroundGeolocation.onProviderChange(_onStatusCallback!);
