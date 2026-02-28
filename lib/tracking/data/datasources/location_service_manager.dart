@@ -195,6 +195,7 @@ class BackgroundLocationServiceManager {
   void _listenMotion() {
     _onMotionCallback = (loc) {
       if (!_motionController.isClosed) {
+        print('[BackgroundLocationServiceManager] lcoation added:$loc');
         _motionController.add(loc);
       }
     };
