@@ -12,17 +12,26 @@ class LocationEventAggregator {
   ///does not need dispose as async* and yield* is used, they auto dispose once done.
   Stream<LocationEvent> get events async* {
     yield* StreamGroup.merge<LocationEvent>([
-      manager.locationStream.map((loc) => LocationEvent.locationUpdated(loc)),
-      manager.geofenceStream.map(
-        (event) => LocationEvent.geofenceTriggered(event),
-      ),
-      manager.motionStream.map((event) => LocationEvent.motionChanged(event)),
-      manager.statusStream.map(
-        (event) => LocationEvent.serviceStatusChanged(event),
-      ),
-      manager.enabledStream.map(
-        (enabled) => LocationEvent.serviceEnabledChanged(enabled),
-      ),
+      manager.locationStream.map((loc) {
+        print('[LocationEventAggregator] Adding location to stream: $loc');
+        return LocationEvent.locationUpdated(loc);
+      }),
+      manager.geofenceStream.map((event) {
+        print('[LocationEventAggregator] Adding geofence to stream: $event');
+        return LocationEvent.geofenceTriggered(event);
+      }),
+      manager.motionStream.map((event) {
+        print('[LocationEventAggregator] Adding motion to stream: $event');
+        return LocationEvent.motionChanged(event);
+      }),
+      manager.statusStream.map((event) {
+        print('[LocationEventAggregator] Adding status to stream: $event');
+        return LocationEvent.serviceStatusChanged(event);
+      }),
+      manager.enabledStream.map((enabled) {
+        print('[LocationEventAggregator] Adding enabled to stream: $enabled');
+        return LocationEvent.serviceEnabledChanged(enabled);
+      }),
     ]);
   }
 }

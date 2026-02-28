@@ -55,45 +55,57 @@ class BackgroundLocationServiceManager {
   Future<BackgroundLocationServiceManager> initialize(
       LocationServiceManagerConfigType configType,
   ) async {
+    print('[BackgroundLocationServiceManager] Initializing with config: $configType');
     _config = configType.toLocationManagerConfig();
     final bgConfig = mapToBgConfig(_config);
     await bg.BackgroundGeolocation.ready(bgConfig);
+    print('[BackgroundLocationServiceManager] Ready');
     return this;
   }
 
   Future<void> start() async {
     // final state = await bg.BackgroundGeolocation.state;
     // if (state.enabled) return;
+    print('[BackgroundLocationServiceManager] Starting service');
     try {
       await bg.BackgroundGeolocation.start();
       await bg.BackgroundGeolocation.changePace(true);
+      print('[BackgroundLocationServiceManager] Service started successfully');
     } catch (e) {
-      print("BACKGROUND_EXP:::::11111:START::$e");
+      print("[BackgroundLocationServiceManager] BACKGROUND_EXP:::::11111:START::$e");
     }
   }
 
   Future<void> resume() async {
+    print('[BackgroundLocationServiceManager] Resuming service');
     final state = await bg.BackgroundGeolocation.state;
     if (state.enabled) return;
     _reattachAllListeners();
     await bg.BackgroundGeolocation.start();
     await bg.BackgroundGeolocation.changePace(true);
+    print('[BackgroundLocationServiceManager] Service resumed successfully');
   }
 
   Future<void> pause() async {
+    print('[BackgroundLocationServiceManager] Pausing service');
     try {
       if (_enabledFeatures.contains(LocationFeature.location)) {
         await bg.BackgroundGeolocation.stop();
+        print('[BackgroundLocationServiceManager] Service paused successfully');
       }
     } catch (e) {
-      print("BACKGROUND_EXP::::PAUSE:::11111$e");
+      print("[BackgroundLocationServiceManager] BACKGROUND_EXP::::PAUSE:::11111$e");
     }
   }
 
   // DON'T clear features - keep them for restart
   Future<void> stop() async {
+    print('[BackgroundLocationServiceManager] Stopping service');
     final state = await bg.BackgroundGeolocation.state;
-    if (!state.enabled) return;
+    if (!state.enabled) {
+      print('[BackgroundLocationServiceManager] Service already stopped');
+      return;
+    }
     await bg.BackgroundGeolocation.changePace(false);
     await bg.BackgroundGeolocation.stop();
     bg.BackgroundGeolocation.removeListeners();
@@ -102,9 +114,11 @@ class BackgroundLocationServiceManager {
     _onGeofenceCallback = null;
     _onStatusCallback = null;
     _onEnabledCallback = null;
+    print('[BackgroundLocationServiceManager] Service stopped successfully');
   }
 
   Future<void> dispose() async {
+    print('[BackgroundLocationServiceManager] Disposing manager');
     final state = await bg.BackgroundGeolocation.state;
     if (state.enabled) {
       await bg.BackgroundGeolocation.changePace(false);
@@ -117,6 +131,7 @@ class BackgroundLocationServiceManager {
     await _geofenceController.close();
     await _statusController.close();
     await _enabledController.close();
+    print('[BackgroundLocationServiceManager] Manager disposed');
   }
 
   void _reattachAllListeners() {
