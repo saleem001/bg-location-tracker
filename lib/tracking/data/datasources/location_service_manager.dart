@@ -257,6 +257,7 @@ class BackgroundLocationServiceManager {
     _onStatusCallback = (status) {
       if (!_statusController.isClosed) {
         _statusController.add(status);
+        print('[BackgroundLocationServiceManager] perimssion :$status');
       }
     };
     bg.BackgroundGeolocation.onProviderChange(_onStatusCallback!);
@@ -285,6 +286,7 @@ class BackgroundLocationServiceManager {
   void _listenEnabled() {
     _onEnabledCallback = (enabled) {
       if (!_enabledController.isClosed) {
+        print('[BackgroundLocationServiceManager] service :$enabled');
         _enabledController.add(enabled);
       }
     };
